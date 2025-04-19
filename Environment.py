@@ -5,7 +5,6 @@ import torch
 import pandas as pd
 
 from Sprites import *
-from model import DQL
 
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
@@ -26,16 +25,19 @@ EPS = 0.4
 
 
 class Game():
-    def __init__(self, screen, map):
-        self.map = pd.read_excel(map, header=None)
+    def __init__(self, screen, maps):
+        self.maps = maps
         self.empty_space = pygame.sprite.Group()
         self.border = pygame.sprite.Group()
         self.forest = pygame.sprite.Group()
-        self.size = WIDTH/len(self.map)
+        # self.size = WIDTH/len(self.map)
+        self.size = 20
         self.screen = screen
         self.reward = 0
+        self.on_mission = False
     
-    def generate_map(self):
+    def generate_map(self, map):
+        self.map = pd.read_excel(map, header=None)
         for y in range(len(self.map)):
             layer = []
             for x in range(len(self.map[0])):
@@ -56,6 +58,15 @@ class Game():
         
         self.car = Car(9 * self.size, 35 * self.size, self.size)
         self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
+    
+    def generate_button(self):
+        self.map_button_1 = MapButton(self.maps["map 1"][1][0], self.maps["map 1"][1][1], "1 map", self.maps["map 1"][0])
+        self.map_button_2 = MapButton(self.maps["map 2"][1][0], self.maps["map 2"][1][1], "2 map", self.maps["map 2"][0])
+        self.map_button_3 = MapButton(self.maps["map 3"][1][0], self.maps["map 3"][1][1], "3 map", self.maps["map 3"][0])
+        
+        self.map_button_1.create_button()
+        self.map_button_2.create_button()
+        self.map_button_3.create_button()
 
     def barriers_check(self):
         if pygame.sprite.spritecollideany(self.car, self.forest) or pygame.sprite.spritecollideany(self.car, self.border):
@@ -146,32 +157,54 @@ class Game():
         self.screen.blit(self.flag.image, self.flag.rect)
         self.screen.blit(self.car.image, self.car.rect)
         pygame.display.flip() 
-
-if __name__ == "__main__":
-    pygame.init()
-    map = 'E:\VS_project\souless\map_1.xlsx'
-    screen = pygame.display.set_mode((WIDTH_SCREEN, HEIGHT_SCREEN))
-    pygame.display.set_caption("game")
-    clock = pygame.time.Clock()
-    game = Game(screen, map)
-    game.generate_map()
-    while True:
-        screen.fill((155, 255, 155))
-        clock.tick(FPS) 
-        
-
+    
+    def button_tracking(self):
         for event in pygame.event.get():
             #Закрытие игры
             if event.type == pygame.QUIT:
                 pygame.quit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_DOWN:
-                    game.car.go_down()
+                    self.car.go_down()
                 elif event.key == pygame.K_RIGHT:
-                    game.car.go_right()
+                    self.car.go_right()
                 elif event.key == pygame.K_UP:
-                    game.car.go_up()
+                    self.car.go_up()
                 elif event.key == pygame.K_LEFT:
-                    game.car.go_left()
+                    self.car.go_left()
+            
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self.map_button_1.button_rect.collidepoint(event.pos) and not(self.on_mission):
+                    self.on_mission = True
+                    self.generate_map(self.map_button_1.map)
+                if self.map_button_2.button_rect.collidepoint(event.pos) and not(self.on_mission):
+                    self.on_mission = True
+                    self.generate_map(self.map_button_2.map)
+                if self.map_button_3.button_rect.collidepoint(event.pos) and not(self.on_mission):
+                    self.on_mission = True
+                    self.generate_map(self.map_button_3.map)
+
+if __name__ == "__main__":
+    pygame.init()
+    maps = {"map 1": ['E:\VS_project\souless\map_1.xlsx', (420, 395)], 
+            "map 2": ['E:\VS_project\souless\map_2.xlsx', (420, 455)],
+            "map 3": ['E:\VS_project\souless\map_4.xlsx', (420, 515)]}
+    screen = pygame.display.set_mode((WIDTH_SCREEN, HEIGHT_SCREEN))
+    pygame.display.set_caption("game")
+    clock = pygame.time.Clock()
+    game = Game(screen, maps)
+    game.generate_button()
+
+    while True:
+        screen.fill((155, 255, 155))
+        clock.tick(FPS) 
         
-        game.run_game()
+        game.button_tracking()
+        
+        if game.on_mission:
+            game.run_game()
+        else:
+            game.map_button_1.draw_button(screen)
+            game.map_button_2.draw_button(screen)
+            game.map_button_3.draw_button(screen)
+            pygame.display.flip() 

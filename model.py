@@ -6,6 +6,7 @@ import torch.optim as optim
 import pygame
 from Environment import *
 import random
+import matplotlib.pyplot as plt
 
 EPS = 0.4
 
@@ -25,7 +26,9 @@ class DQL(nn.Module):
         self.memory_rewards = []
         self.memory_next_states = []
         self.memory_len = 0
+        self.epochs_num = 1
         self.loses = []
+        self.epoch = []
         self.rewards_per_epoch = []
 
         #Параметры
@@ -88,7 +91,17 @@ class DQL(nn.Module):
         if (self.inp.weight.grad.norm() < 0.0001):
             self.inp.weight.grad.data += t.FloatTensor([0.001]).cpu()
         self.optimizer.step()
+
         print(f"Ошибка: {loss}")
+    
+    def draw_plot(self):
+        self.epoch.append(self.epochs_num)
+        plt.plot(self.epoch, self.loses)
+        plt.ion()
+        plt.show()
+        self.epochs_num +=1
+        plt.pause(0.001)
+
     
     def game(self):
         state = env.get_state()
@@ -102,40 +115,40 @@ class DQL(nn.Module):
 
 if __name__ == "__main__":
     pygame.init()
-    map = 'E:\VS_project\souless\map_4.xlsx'
+    maps = {"map 1": ['E:\VS_project\souless\map_1.xlsx', (420, 395)], 
+            "map 2": ['E:\VS_project\souless\map_2.xlsx', (420, 455)],
+            "map 3": ['E:\VS_project\souless\map_4.xlsx', (420, 515)]}
     screen = pygame.display.set_mode((WIDTH_SCREEN, HEIGHT_SCREEN))
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
-    env = Game(screen, map)
+    env = Game(screen, maps)
     agent = DQL(num_layers=12)
-    env.generate_map()
+    env.generate_button()
+
+
     train_step = 1
 
     while True:
         screen.fill((155, 255, 155))
         clock.tick(FPS) 
         
-
-        for event in pygame.event.get():
-            #Закрытие игры
-            if event.type == pygame.QUIT:
-                pygame.quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_DOWN:
-                    env.car.go_down()
-                elif event.key == pygame.K_RIGHT:
-                    env.car.go_right()
-                elif event.key == pygame.K_UP:
-                    env.car.go_up()
-                elif event.key == pygame.K_LEFT:
-                    env.car.go_left()
+        env.button_tracking()
         
-        agent.game()
+        if env.on_mission:
+            agent.game()
 
-        if train_step % 200 == 0:
-            print(train_step)
-            agent.train()
-            env.car.restart()
+            if train_step % 200 == 0:
+                print(train_step)
+                agent.train()
+                env.car.restart()
+                agent.draw_plot()
 
-        
-        train_step += 1
+            if train_step == 3500:
+                EPS = 0
+            
+            train_step += 1
+        else:
+            env.map_button_1.draw_button(screen)
+            env.map_button_2.draw_button(screen)
+            env.map_button_3.draw_button(screen)
+            pygame.display.flip() 
