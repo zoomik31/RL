@@ -32,6 +32,7 @@ class Game():
         self.forest = pygame.sprite.Group()
         # self.size = WIDTH/len(self.map)
         self.size = 20
+        self.train_step = 1
         self.screen = screen
         self.reward = 0
         self.on_mission = False
@@ -196,6 +197,7 @@ class Game():
 
                 if self.save_button.button_rect.collidepoint(event.pos):
                     self.save_button.save_model(model)
+    
 
 if __name__ == "__main__":
     pygame.init()

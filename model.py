@@ -101,7 +101,18 @@ class DQL(nn.Module):
         plt.show()
         self.epochs_num +=1
         plt.pause(0.001)
+    
+    def rollback(self):
+        env.forest.empty()
+        env.empty_space.empty()
+        env.border.empty()
 
+        env.train_step = 1
+        self.epochs_num = 1
+        self.loses = []
+        self.epoch = []
+
+        plt.close('all')
     
     def game(self):
         state = env.get_state()
@@ -125,9 +136,6 @@ if __name__ == "__main__":
     agent = DQL(num_layers=12)
     env.generate_button()
 
-
-    train_step = 1
-
     while True:
         screen.fill((155, 255, 155))
         clock.tick(FPS) 
@@ -140,17 +148,19 @@ if __name__ == "__main__":
             agent.game()
             
 
-            if train_step % 200 == 0:
-                print(train_step)
+            if env.train_step % 200 == 0:
+                print(env.train_step)
                 agent.train()
                 env.car.restart()
                 agent.draw_plot()
 
-            if train_step == 3500:
+            if env.train_step == 3500:
                 EPS = 0
             
-            train_step += 1
+            env.train_step += 1
         else:
+            if env.train_step > 1:
+                agent.rollback()
             env.map_button_1.draw_button(screen)
             env.map_button_2.draw_button(screen)
             env.map_button_3.draw_button(screen)
