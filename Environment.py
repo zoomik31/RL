@@ -64,9 +64,16 @@ class Game():
         self.map_button_2 = MapButton(self.maps["map 2"][1][0], self.maps["map 2"][1][1], "2 map", self.maps["map 2"][0])
         self.map_button_3 = MapButton(self.maps["map 3"][1][0], self.maps["map 3"][1][1], "3 map", self.maps["map 3"][0])
         
+        self.back_button = BackButton(200, 900, "choise map")
+
+        self.save_button = SaveModelButton(600, 900, "save model")
+
         self.map_button_1.create_button()
         self.map_button_2.create_button()
         self.map_button_3.create_button()
+
+        self.back_button.create_button()
+        self.save_button.create_button()
 
     def barriers_check(self):
         if pygame.sprite.spritecollideany(self.car, self.forest) or pygame.sprite.spritecollideany(self.car, self.border):
@@ -158,7 +165,7 @@ class Game():
         self.screen.blit(self.car.image, self.car.rect)
         pygame.display.flip() 
     
-    def button_tracking(self):
+    def button_tracking(self, model):
         for event in pygame.event.get():
             #Закрытие игры
             if event.type == pygame.QUIT:
@@ -184,6 +191,12 @@ class Game():
                     self.on_mission = True
                     self.generate_map(self.map_button_3.map)
 
+                if self.back_button.button_rect.collidepoint(event.pos) and self.on_mission:
+                    self.on_mission = False
+
+                if self.save_button.button_rect.collidepoint(event.pos):
+                    self.save_button.save_model(model)
+
 if __name__ == "__main__":
     pygame.init()
     maps = {"map 1": ['E:\VS_project\souless\map_1.xlsx', (420, 395)], 
@@ -202,7 +215,10 @@ if __name__ == "__main__":
         game.button_tracking()
         
         if game.on_mission:
+        
             game.run_game()
+        
+        
         else:
             game.map_button_1.draw_button(screen)
             game.map_button_2.draw_button(screen)

@@ -132,10 +132,13 @@ if __name__ == "__main__":
         screen.fill((155, 255, 155))
         clock.tick(FPS) 
         
-        env.button_tracking()
+        env.button_tracking(agent)
         
         if env.on_mission:
+            env.back_button.draw_button(screen)
+            env.save_button.draw_button(screen)
             agent.game()
+            
 
             if train_step % 200 == 0:
                 print(train_step)
