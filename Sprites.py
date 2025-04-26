@@ -1,4 +1,5 @@
 import pygame
+import torch
 
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
@@ -36,6 +37,51 @@ class Tree(Cell):
     def __init__(self, x, y, size, colour=GREEN):
        super().__init__(x, y, size, colour)
 
+class Button(pygame.Surface):
+    def __init__(self, x, y, text):
+        pygame.Surface.__init__(self, (150, 50))
+        self.colour = WHITE
+        self.x = x
+        self.y = y
+        self.font = pygame.font.Font(None, 24)
+        self.text_colour = BLACK
+        self.font_antialias = True
+        self.text = text
+    
+    def create_button(self):
+        self.fill(self.colour)
+
+        self.text_map = self.font.render(self.text, self.font_antialias, self.text_colour)
+        
+        self.text_rect = self.text_map.get_rect(
+        center=(self.get_width() /2, 
+                self.get_height()/2))
+        
+        self.button_rect = self.get_rect(center=(self.x, self.y))
+    
+    def draw_button(self, screen):
+        self.blit(self.text_map, self.text_rect)
+
+        screen.blit(self, (self.button_rect.x, self.button_rect.y))
+
+
+class MapButton(Button):
+    def __init__(self, x, y, text, map):
+        super().__init__(x, y, text)
+        self.map = map
+
+class SwitchButton(Button):
+    def __init__(self, x, y, text):
+        super().__init__(x, y, text)
+
+class SaveModelButton(Button):
+    def __init__(self, x, y, text):
+        super().__init__(x, y, text)
+    
+    def save(self, model, name):
+        print('model save')
+        torch.save(model, (f'{name}.pth'))
+        
 class Car(pygame.sprite.Sprite):
     def __init__(self, x=0, y=0, size=10):
         pygame.sprite.Sprite.__init__(self)

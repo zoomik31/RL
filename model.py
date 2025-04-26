@@ -25,6 +25,8 @@ class DQL(nn.Module):
         self.memory_rewards = []
         self.memory_next_states = []
         self.memory_len = 0
+        self.epochs_num = 1
+        self.train_step = 1
         self.loses = []
         self.rewards_per_epoch = []
 
@@ -90,6 +92,26 @@ class DQL(nn.Module):
         self.optimizer.step()
         print(f"Ошибка: {loss}")
     
+    def draw_plot(self):
+        self.epoch.append(self.epochs_num)
+        plt.plot(self.epoch, self.loses)
+        plt.ion()
+        plt.show()
+        self.epochs_num +=1
+        plt.pause(0.001)
+
+    def rollback(self):
+        print('done')
+        plt.close('all')
+        agent.train_step = 1
+        agent.epochs_num = 0
+        agent.loses = []
+        agent.epoch = []
+        env.empty_space.empty()
+        env.border.empty()
+        env.forest.empty()
+        EPS = 0.4
+
     def game(self):
         state = env.get_state()
         if (random.random() < EPS):
@@ -100,6 +122,7 @@ class DQL(nn.Module):
         next_state, reward = env.step(action)
         self.remember(state, action, reward, next_state)
 
+
 if __name__ == "__main__":
     pygame.init()
     map = 'E:\VS_project\souless\map_4.xlsx'
@@ -108,34 +131,36 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
     env = Game(screen, map)
     agent = DQL(num_layers=12)
-    env.generate_map()
-    train_step = 1
+    env.generate_button()
 
     while True:
         screen.fill((155, 255, 155))
         clock.tick(FPS) 
         
-
-        for event in pygame.event.get():
-            #Закрытие игры
-            if event.type == pygame.QUIT:
-                pygame.quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_DOWN:
-                    env.car.go_down()
-                elif event.key == pygame.K_RIGHT:
-                    env.car.go_right()
-                elif event.key == pygame.K_UP:
-                    env.car.go_up()
-                elif event.key == pygame.K_LEFT:
-                    env.car.go_left()
+        env.button_tracking(agent)
         
-        agent.game()
+        if env.on_mission:
+            
+            env.switch_button.draw_button(screen)
+            env.save_button.draw_button(screen)
 
-        if train_step % 200 == 0:
-            print(train_step)
-            agent.train()
-            env.car.restart()
+            agent.game()
 
-        
-        train_step += 1
+            if agent.train_step % 200 == 0:
+                print(agent.train_step)
+                agent.train()
+                env.car.restart()
+                agent.draw_plot()
+
+            # if agent.train_step == 4000:
+            #     EPS = 0
+            
+            agent.train_step += 1
+        else:
+            if agent.train_step > 1:
+                agent.rollback()
+
+            env.map_button_1.draw_button(screen)
+            env.map_button_2.draw_button(screen)
+            env.map_button_3.draw_button(screen)
+            pygame.display.flip() 
