@@ -8,6 +8,7 @@ GREY = (123, 241, 123)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
+PINK = (255,39,203)
 
 class Cell(pygame.sprite.Sprite):
     def __init__(self, x, y, size, colour = RED):
@@ -19,7 +20,6 @@ class Cell(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-
 
 class Border(Cell):
     def __init__(self, x, y, size, colour=BLACK):
@@ -35,6 +35,10 @@ class Empty(Cell):
 
 class Tree(Cell):
     def __init__(self, x, y, size, colour=GREEN):
+       super().__init__(x, y, size, colour)
+
+class AddRewards(Cell):
+    def __init__(self, x, y, size, colour=PINK):
        super().__init__(x, y, size, colour)
 
 class Button(pygame.Surface):
@@ -82,7 +86,33 @@ class SaveModelButton(Button):
     def save_model(self, model):
         torch.save(model.state_dict(), 'model.pth')
         
+class DirectionText(pygame.Surface):
+    def __init__(self, x, y):
+        pygame.Surface.__init__(self, (150, 50))
+        self.colour = WHITE
+        self.x = x
+        self.y = y
+        self.font = pygame.font.Font(None, 24)
+        self.text_colour = BLACK
+        self.font_antialias = True
+    
+    def create_text(self, text):
+        self.fill(self.colour)
+
+        self.text_dir = self.font.render(text, self.font_antialias, self.text_colour)
         
+        self.text_rect = self.text_dir.get_rect(
+        center=(self.get_width() /2, 
+                self.get_height()/2))
+        
+        self.dir_text_space = self.get_rect(center=(self.x, self.y))
+    
+    def draw_dir_text(self, screen):
+        self.blit(self.text_dir, self.text_rect)
+
+        screen.blit(self, (self.dir_text_space.x, self.dir_text_space.y))
+
+
 class Car(pygame.sprite.Sprite):
     def __init__(self, x=0, y=0, size=10):
         pygame.sprite.Sprite.__init__(self)

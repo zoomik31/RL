@@ -15,10 +15,10 @@ class DQL(nn.Module):
 
         super().__init__()
         # Слои
-        self.inp = nn.Linear(num_layers, 128)
-        self.hidden1 = nn.Linear(128, 128)
-        self.hidden2 = nn.Linear(128, 128)
-        self.out = nn.Linear(128, 5)
+        self.inp = nn.Linear(num_layers, 96)
+        self.hidden1 = nn.Linear(96, 96)
+        self.hidden2 = nn.Linear(96, 96)
+        self.out = nn.Linear(96, 5)
 
         # Память
         self.memory_states = []
@@ -106,11 +106,16 @@ class DQL(nn.Module):
         env.forest.empty()
         env.empty_space.empty()
         env.border.empty()
+        env.reward_group.empty()
+        env.all_map = []
 
         env.train_step = 1
         self.epochs_num = 1
         self.loses = []
         self.epoch = []
+
+        env.dist_add_reward = []
+        env.prev_dist_add_reward = []
 
         plt.close('all')
     
@@ -124,6 +129,12 @@ class DQL(nn.Module):
         next_state, reward = env.step(action)
         self.remember(state, action, reward, next_state)
 
+    def save_button_tracking(self):
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if env.save_button.button_rect.collidepoint(event.pos):
+                    env.save_button.save_model(self)
+
 if __name__ == "__main__":
     pygame.init()
     maps = {"map 1": ['E:\VS_project\souless\map_1.xlsx', (420, 395)], 
@@ -133,34 +144,37 @@ if __name__ == "__main__":
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
     env = Game(screen, maps)
-    agent = DQL(num_layers=12)
+    agent = DQL(num_layers=29)
     env.generate_button()
 
     while True:
         screen.fill((155, 255, 155))
-        clock.tick(FPS) 
+        clock.tick(env.fps) 
         
-        env.button_tracking(agent)
+        env.button_tracking()
         
         if env.on_mission:
             env.back_button.draw_button(screen)
             env.save_button.draw_button(screen)
             agent.game()
-            
+            agent.save_button_tracking()
+
 
             if env.train_step % 200 == 0:
                 print(env.train_step)
                 agent.train()
                 env.car.restart()
-                agent.draw_plot()
+                env.reset_add_reward()
+                #agent.draw_plot()
 
-            if env.train_step == 3500:
-                EPS = 0
+            # if env.train_step == 10000:
+            #     EPS = 0
             
             env.train_step += 1
         else:
             if env.train_step > 1:
                 agent.rollback()
+            
             env.map_button_1.draw_button(screen)
             env.map_button_2.draw_button(screen)
             env.map_button_3.draw_button(screen)
