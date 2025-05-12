@@ -32,6 +32,11 @@ class Flag(Cell):
 class Empty(Cell):
     def __init__(self, x, y, size, colour=WHITE):
         super().__init__(x, y, size, colour)
+        self.colour = colour
+        
+    def switch_colour(self, new_colour):
+        self.colour = new_colour
+        print(self.colour)
 
 class Tree(Cell):
     def __init__(self, x, y, size, colour=GREEN):

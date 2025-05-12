@@ -113,6 +113,12 @@ class DQL(nn.Module):
         self.epoch = []
 
         plt.close('all')
+
+    def save_button_tracking(self):
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if env.save_button.button_rect.collidepoint(event.pos):
+                    env.save_button.save_model(self)
     
     def game(self):
         state = env.get_state()
@@ -133,28 +139,28 @@ if __name__ == "__main__":
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
     env = Game(screen, maps)
-    agent = DQL(num_layers=12)
+    agent = DQL(num_layers=31)
     env.generate_button()
 
     while True:
         screen.fill((155, 255, 155))
         clock.tick(FPS) 
         
-        env.button_tracking(agent)
+        env.button_tracking()
         
         if env.on_mission:
             env.back_button.draw_button(screen)
             env.save_button.draw_button(screen)
             agent.game()
-            
+            agent.save_button_tracking()
 
-            if env.train_step % 200 == 0:
+            if env.train_step % 300 == 0:
                 print(env.train_step)
                 agent.train()
                 env.car.restart()
-                agent.draw_plot()
+                # agent.draw_plot()
 
-            if env.train_step == 3500:
+            if env.train_step == 20000:
                 EPS = 0
             
             env.train_step += 1

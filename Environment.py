@@ -7,6 +7,7 @@ import pandas as pd
 from Sprites import *
 
 BLUE = (0, 0, 255)
+LIGHT_BLUE = (0, 0, 128)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 GREY = (123, 241, 123)
@@ -30,7 +31,8 @@ class Game():
         self.empty_space = pygame.sprite.Group()
         self.border = pygame.sprite.Group()
         self.forest = pygame.sprite.Group()
-        # self.size = WIDTH/len(self.map)
+        
+        self.all_map = []
         self.size = 20
         self.train_step = 1
         self.screen = screen
@@ -45,17 +47,23 @@ class Game():
                 if self.map[y][x] == 1:
                     brd = Border(x*self.size, y*self.size, self.size)
                     self.border.add(brd)
+                    layer.append(1)
                 
                 elif self.map[y][x] == 2:
                     self.flag = Flag(x*self.size, y*self.size, self.size)
+                    layer.append(2)
 
                 elif self.map[y][x] == 3:
                     tree = Tree(x*self.size, y*self.size, self.size)
                     self.forest.add(tree)
+                    layer.append(3)
 
                 else:
                     emp = Empty(x*self.size, y*self.size, self.size)
                     self.empty_space.add(emp)
+                    layer.append(0)
+
+            self.all_map.append(layer)
         
         self.car = Car(9 * self.size, 35 * self.size, self.size)
         self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
@@ -94,39 +102,52 @@ class Game():
 
         state = []
 
-        self.car.go_right()
-        if self.barriers_check():
-            self.block_right = True
-        else: 
-            self.car.go_back()
-            self.block_right = False
+        # self.car.go_right()
+        # if self.barriers_check():
+        #     self.block_right = True
+        # else: 
+        #     self.car.go_back()
+        #     self.block_right = False
         
-        self.car.go_left()
-        if self.barriers_check():
-            self.block_left = True
-        else: 
-            self.car.go_back()
-            self.block_left = False
+        # self.car.go_left()
+        # if self.barriers_check():
+        #     self.block_left = True
+        # else: 
+        #     self.car.go_back()
+        #     self.block_left = False
         
-        self.car.go_down()
-        if self.barriers_check():
-            self.block_down = True
-        else: 
-            self.car.go_back()
-            self.block_down = False
+        # self.car.go_down()
+        # if self.barriers_check():
+        #     self.block_down = True
+        # else: 
+        #     self.car.go_back()
+        #     self.block_down = False
         
-        self.car.go_up()
-        if self.barriers_check():
-            self.block_up = True
-        else: 
-            self.car.go_back()
-            self.block_up = False
+        # self.car.go_up()
+        # if self.barriers_check():
+        #     self.block_up = True
+        # else: 
+        #     self.car.go_back()
+        #     self.block_up = False
         
-        state = [int(self.car.rect.x < self.flag.rect.x), int(self.car.rect.y < self.flag.rect.y),
-                    int(self.car.rect.x > self.flag.rect.x), int(self.car.rect.y > self.flag.rect.y),
-                    int(self.block_up), int(self.block_right),int(self.block_down),int(self.block_left),
-                    int(self.car.direction == "up"), int(self.car.direction == "right"), int(self.car.direction == "down"), int(self.car.direction == "left")
-        ]
+        # state = [int(self.car.rect.x < self.flag.rect.x), int(self.car.rect.y < self.flag.rect.y),
+        #             int(self.car.rect.x > self.flag.rect.x), int(self.car.rect.y > self.flag.rect.y),
+        #             int(self.block_up), int(self.block_right),int(self.block_down),int(self.block_left),
+        #             int(self.car.direction == "up"), int(self.car.direction == "right"), int(self.car.direction == "down"), int(self.car.direction == "left")
+        # ]
+
+        for y in range(int(self.car.rect.y/self.size)-2, (int(self.car.rect.y/self.size)+3)):
+            for x in range(int(self.car.rect.x/self.size)-2, int(self.car.rect.x/self.size)+3):
+                state.append(self.all_map[y][x])
+        
+        state.append(int(self.car.direction == "up"))
+        state.append(int(self.car.direction == "right"))
+        state.append(int(self.car.direction == "down"))
+        state.append(int(self.car.direction == "left"))
+        state.append(int(self.flag.rect.x/20))
+        state.append(int(self.flag.rect.y/20))
+        # state.append(self.dist)
+
         return state
 
     def step(self, action):
@@ -142,22 +163,36 @@ class Game():
         self.run_game()
         state = self.get_state()
         return state, self.reward
+    
+    def color_change(self):
+        for cells in self.empty_space:
+            if pygame.sprite.collide_rect(self.car, cells):
+                x, y = cells.rect.x, cells.rect.y
+                if cells.colour == LIGHT_BLUE or cells.colour == BLUE:
+                    colour = BLUE
+                else: 
+                    colour = LIGHT_BLUE
+
+                self.empty_space.remove(cells)
+                emp = Empty(x, y, self.size, colour)
+                self.empty_space.add(emp)
 
     def run_game(self):
+
+        self.color_change()
         #Совершение действия
         self.reward = 0
         self.measure_distance()
         if self.barriers_check():
-            self.reward = -100
+            self.reward = -120
         elif self.flag_check():
-            self.reward = 100
+            self.reward = 200
         elif self.dist < self.prev_dist:
             self.reward = 50
         elif self.dist == self.prev_dist:
             self.reward = 0
         else:
-            self.reward = 30
-
+            self.reward = 20
 
         self.border.draw(self.screen)
         self.forest.draw(self.screen)
@@ -166,7 +201,7 @@ class Game():
         self.screen.blit(self.car.image, self.car.rect)
         pygame.display.flip() 
     
-    def button_tracking(self, model):
+    def button_tracking(self):
         for event in pygame.event.get():
             #Закрытие игры
             if event.type == pygame.QUIT:
@@ -194,9 +229,6 @@ class Game():
 
                 if self.back_button.button_rect.collidepoint(event.pos) and self.on_mission:
                     self.on_mission = False
-
-                if self.save_button.button_rect.collidepoint(event.pos):
-                    self.save_button.save_model(model)
     
 
 if __name__ == "__main__":
