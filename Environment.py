@@ -176,6 +176,16 @@ class Game():
                 self.empty_space.remove(cells)
                 emp = Empty(x, y, self.size, colour)
                 self.empty_space.add(emp)
+            
+    def zeroing_grad(self):
+        for cells in self.empty_space:
+            self.empty_space.remove(cells)
+        
+        for y in range(len(self.map)):
+            for x in range(len(self.map[0])):
+                if self.map[y][x] == 0:
+                    emp = Empty(x*self.size, y*self.size, self.size)
+                    self.empty_space.add(emp)
 
     def run_game(self):
 
@@ -215,6 +225,8 @@ class Game():
                     self.car.go_up()
                 elif event.key == pygame.K_LEFT:
                     self.car.go_left()
+                elif event.key == pygame.K_0:
+                    self.zeroing_grad()
             
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if self.map_button_1.button_rect.collidepoint(event.pos) and not(self.on_mission):
