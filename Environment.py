@@ -33,7 +33,8 @@ class Game():
         self.empty_space = pygame.sprite.Group()
         self.border = pygame.sprite.Group()
         self.forest = pygame.sprite.Group()
-        
+        self.map_group = pygame.sprite.Group()
+
         self.all_map = []
         self.size = 20
         self.train_step = 1
@@ -44,28 +45,32 @@ class Game():
     def generate_map(self, map):
         self.map = pd.read_excel(map, header=None)
         for y in range(len(self.map)):
-            layer = []
+            # layer = []
             for x in range(len(self.map[0])):
                 if self.map[y][x] == 1:
                     brd = Border(x*self.size, y*self.size, self.size)
                     self.border.add(brd)
-                    layer.append(1)
+                    self.map_group.add(brd)
+                    # layer.append(1)
                 
                 elif self.map[y][x] == 2:
                     self.flag = Flag(x*self.size, y*self.size, self.size)
-                    layer.append(2)
+                    # layer.append(2)
+                    self.map_group.add(self.flag)
 
                 elif self.map[y][x] == 3:
                     tree = Tree(x*self.size, y*self.size, self.size)
                     self.forest.add(tree)
-                    layer.append(3)
+                    # layer.append(3)
+                    self.map_group.add(tree)
 
                 else:
                     emp = Empty(x*self.size, y*self.size, self.size)
                     self.empty_space.add(emp)
-                    layer.append(0)
+                    # layer.append(0)
+                    self.map_group.add(emp)
 
-            self.all_map.append(layer)
+            # self.all_map.append(layer)
         
         self.car = Car(9 * self.size, 35 * self.size, self.size)
         self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
@@ -138,9 +143,23 @@ class Game():
         #             int(self.car.direction == "up"), int(self.car.direction == "right"), int(self.car.direction == "down"), int(self.car.direction == "left")
         # ]
 
+        # for y in range(int(self.car.rect.y/self.size)-2, (int(self.car.rect.y/self.size)+3)):
+        #     for x in range(int(self.car.rect.x/self.size)-2, int(self.car.rect.x/self.size)+3):
+        #         state.append(self.all_map[y][x])
+        
+        # state.append(int(self.car.direction == "up"))
+        # state.append(int(self.car.direction == "right"))
+        # state.append(int(self.car.direction == "down"))
+        # state.append(int(self.car.direction == "left"))
+        # state.append(int(self.flag.rect.x/20))
+        # state.append(int(self.flag.rect.y/20))
+        # state.append(self.dist)
+
         for y in range(int(self.car.rect.y/self.size)-2, (int(self.car.rect.y/self.size)+3)):
             for x in range(int(self.car.rect.x/self.size)-2, int(self.car.rect.x/self.size)+3):
-                state.append(self.all_map[y][x])
+                for cell in self.map_group:
+                    if cell.rect.collidepoint(x*self.size, y*self.size):
+                        state.append(int(round(cell.colour[2]/255)))
         
         state.append(int(self.car.direction == "up"))
         state.append(int(self.car.direction == "right"))
@@ -148,8 +167,7 @@ class Game():
         state.append(int(self.car.direction == "left"))
         state.append(int(self.flag.rect.x/20))
         state.append(int(self.flag.rect.y/20))
-        # state.append(self.dist)
-
+        
         return state
 
     def step(self, action):
@@ -178,10 +196,11 @@ class Game():
                     colour = GRAD_2
                 elif cells.colour == GRAD_2 or cells.colour == GRAD_1:
                     colour = GRAD_1
-                print(int(round(256/colour[2])))
+                self.map_group.remove(cells)
                 self.empty_space.remove(cells)
                 emp = Empty(x, y, self.size, colour)
                 self.empty_space.add(emp)
+                self.map_group.add(emp)
             
     def zeroing_grad(self):
         for cells in self.empty_space:
@@ -203,6 +222,9 @@ class Game():
             self.reward = -120
         elif self.flag_check():
             self.reward = 200
+        
+        elif 
+
         elif self.dist < self.prev_dist:
             self.reward = 50
         elif self.dist == self.prev_dist:
