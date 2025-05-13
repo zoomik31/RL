@@ -6,8 +6,10 @@ import pandas as pd
 
 from Sprites import *
 
-BLUE = (0, 0, 255)
-LIGHT_BLUE = (0, 0, 128)
+GRAD_4 = (0, 0, 255)
+GRAD_3 = (0, 0, 128)
+GRAD_2 = (0, 0, 64)
+GRAD_1 = (0, 0, 32)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 GREY = (123, 241, 123)
@@ -168,11 +170,15 @@ class Game():
         for cells in self.empty_space:
             if pygame.sprite.collide_rect(self.car, cells):
                 x, y = cells.rect.x, cells.rect.y
-                if cells.colour == LIGHT_BLUE or cells.colour == BLUE:
-                    colour = BLUE
-                else: 
-                    colour = LIGHT_BLUE
-
+                if cells.colour == WHITE:
+                    colour = GRAD_4
+                elif cells.colour == GRAD_4:
+                    colour = GRAD_3
+                elif cells.colour == GRAD_3:
+                    colour = GRAD_2
+                elif cells.colour == GRAD_2 or cells.colour == GRAD_1:
+                    colour = GRAD_1
+                print(int(round(256/colour[2])))
                 self.empty_space.remove(cells)
                 emp = Empty(x, y, self.size, colour)
                 self.empty_space.add(emp)
