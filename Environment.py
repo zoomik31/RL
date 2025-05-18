@@ -247,22 +247,23 @@ class Game():
         #Совершение действия
         self.reward = 0
         self.measure_distance()
+
+        if inv_cell:
+            self.reward += 20
+        else:
+            self.reward += -5
+
+        if self.dist < self.prev_dist:
+            self.reward += 20
+        elif self.dist == self.prev_dist:
+            self.reward += 0
+        else:
+            self.reward += 5
+
         if self.barriers_check():
             self.reward = -120
         elif self.flag_check():
             self.reward = 200
-
-        # if inv_cell:
-        #     self.reward += 20
-        # else:
-        #     self.reward += 0
-
-        if self.dist < self.prev_dist:
-            self.reward = 20
-        elif self.dist == self.prev_dist:
-            self.reward = 0
-        else:
-            self.reward = 10
 
         self.border.draw(self.screen)
         self.forest.draw(self.screen)
