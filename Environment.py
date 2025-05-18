@@ -30,7 +30,6 @@ class Game():
         self.empty_space = pygame.sprite.Group()
         self.border = pygame.sprite.Group()
         self.forest = pygame.sprite.Group()
-        self.reward_group = pygame.sprite.Group()
 
         self.all_map = []
         self.size = 20
@@ -60,12 +59,6 @@ class Game():
                     tree = Tree(x*self.size, y*self.size, self.size)
                     self.forest.add(tree)
                     layer.append(3)
-                
-                elif self.map[y][x] == 4:
-                    self.count_add_reward.append((x, y, self.size))
-                    add = AddRewards(x*self.size, y*self.size, self.size)
-                    self.reward_group.add(add)
-                    layer.append(4)
 
                 else:
                     self.emp = Empty(x*self.size, y*self.size, self.size)
@@ -75,11 +68,7 @@ class Game():
             self.all_map.append(layer)
         
         self.car = Car(9 * self.size, 35 * self.size, self.size)
-        self.dist_main_reward = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
-        
-        self.dist_add_reward = []
-        for add in self.reward_group:
-            self.dist_add_reward.append(math.sqrt((self.car.rect.x-add.rect.x)**2 + (self.car.rect.y- add.rect.y)**2))
+        self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
             
     def generate_button(self):
         self.map_button_1 = MapButton(self.maps["map 1"][1][0], self.maps["map 1"][1][1], "1 map", self.maps["map 1"][0])
@@ -112,43 +101,11 @@ class Game():
         if pygame.sprite.collide_rect(self.car, self.flag):
             self.car.restart()
             return True
-    
-    def add_reward_check(self):
-        if pygame.sprite.spritecollideany(self.car, self.reward_group):
-            for sprite in self.reward_group:
-                    if sprite.rect.center == self.car.rect.center:
-                        self.all_map[int(self.car.rect.y/self.size)][int(self.car.rect.x/self.size)] = 0
-                        self.reward_group.remove(sprite)
-            
-            return True
         
-
     def measure_main_reward_distance(self):
-        self.prev_dist_main_reward = self.dist_main_reward
-        self.dist_main_reward = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
+        self.prev_dist = self.dist
+        self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
     
-    def measure_add_reward_distance(self):
-        self.prev_dist_add_reward = self.dist_add_reward.copy()
-        del_zero = []
-
-        for i in self.dist_add_reward:
-            if i == 0:
-                self.dist_add_reward.remove(0.0)
-        
-        for i, add in enumerate(self.reward_group):
-            # print(self.dist_add_reward[i], i)
-            # if int(self.dist_add_reward[i]) == 0:
-            #     print(self.dist_add_reward, i)
-            #     self.dist_add_reward.remove(0.0)
-            #     del_zero.append(i)
-            # else:
-                # if not del_zero:
-                    self.dist_add_reward[i] = math.sqrt((self.car.rect.x-add.rect.x)**2 + (self.car.rect.y-add.rect.y)**2)
-                # else:
-                #     self.dist_add_reward[i-1] = math.sqrt((self.car.rect.x-add.rect.x)**2 + (self.car.rect.y-add.rect.y)**2)
-        if del_zero:
-            self.prev_dist_add_reward.pop(del_zero[0]-1)
-        
     def get_state(self):
 
         state = []
@@ -195,8 +152,6 @@ class Game():
         state.append(int(self.car.direction == "right"))
         state.append(int(self.car.direction == "down"))
         state.append(int(self.car.direction == "left"))
-        # state.append(self.dist_main_reward)
-        # state.append(float(min(self.dist_add_reward)))
 
         return state
 
@@ -218,26 +173,14 @@ class Game():
     def run_game(self):
         self.reward = 0
         self.measure_main_reward_distance()
-        self.measure_add_reward_distance()
         if self.barriers_check():
             self.reward = -130
         elif self.flag_check():
             self.reward = 150
 
-        elif self.add_reward_check():
-            self.reward = 80 
-    
-        elif self.reward_group:
-            if float(min(self.dist_add_reward)) < float(min(self.prev_dist_add_reward)):
-                self.reward = 40
-            elif float(min(self.dist_add_reward)) == float(min(self.prev_dist_add_reward)):
-                self.reward = 0
-            else:
-                self.reward = 10
-        
-        elif self.dist_main_reward < self.prev_dist_main_reward:
+        elif self.dist < self.prev_dist:
             self.reward = 40
-        elif self.dist_main_reward == self.prev_dist_main_reward:
+        elif self.dist == self.prev_dist:
             self.reward = 0
         else:
             self.reward = 10
@@ -246,30 +189,14 @@ class Game():
 
         self.border.draw(self.screen)
         self.forest.draw(self.screen)
-        self.reward_group.draw(self.screen)
         self.empty_space.draw(self.screen)
 
         self.screen.blit(self.flag.image, self.flag.rect)
         self.screen.blit(self.car.image, self.car.rect)
         pygame.display.flip() 
-    
-    def reset_add_reward(self):
-        for sprite in self.reward_group:
-            self.reward_group.remove(sprite)
-
-        for x, y, size in self.count_add_reward:
-            add = AddRewards(x*size, y*size, size)
-            self.all_map[y][x] = 4
-            self.reward_group.add(add)
-        
-        self.dist_add_reward = []
-        for add in self.reward_group:
-            self.dist_add_reward.append(math.sqrt((self.car.rect.x-add.rect.x)**2 + (self.car.rect.y- add.rect.y)**2))
-
-
 
     def print_state(self):
-        print(self.dist_add_reward)
+        print(self.dist)
 
     def button_tracking(self):
         for event in pygame.event.get():

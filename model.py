@@ -106,7 +106,6 @@ class DQL(nn.Module):
         env.forest.empty()
         env.empty_space.empty()
         env.border.empty()
-        env.reward_group.empty()
         env.all_map = []
 
         env.train_step = 1
@@ -114,8 +113,6 @@ class DQL(nn.Module):
         self.loses = []
         self.epoch = []
 
-        env.dist_add_reward = []
-        env.prev_dist_add_reward = []
 
         plt.close('all')
     
@@ -164,7 +161,6 @@ if __name__ == "__main__":
                 print(env.train_step)
                 agent.train()
                 env.car.restart()
-                env.reset_add_reward()
                 #agent.draw_plot()
 
             # if env.train_step == 10000:
