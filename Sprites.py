@@ -36,7 +36,6 @@ class Empty(Cell):
         
     def switch_colour(self, new_colour):
         self.colour = new_colour
-        print(self.colour)
 
 class Tree(Cell):
     def __init__(self, x, y, size, colour=GREEN):
@@ -62,7 +61,6 @@ class Button(pygame.Surface):
         center=(self.get_width() /2, 
                 self.get_height()/2))
         
-        print(self.x, self.y)
         self.button_rect = self.get_rect(center=(self.x, self.y))
     
     def draw_button(self, screen):

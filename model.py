@@ -15,10 +15,10 @@ class DQL(nn.Module):
 
         super().__init__()
         # Слои
-        self.inp = nn.Linear(num_layers, 128)
-        self.hidden1 = nn.Linear(128, 128)
-        self.hidden2 = nn.Linear(128, 128)
-        self.out = nn.Linear(128, 5)
+        self.inp = nn.Linear(num_layers, 256)
+        self.hidden1 = nn.Linear(256, 256)
+        self.hidden2 = nn.Linear(256, 256)
+        self.out = nn.Linear(256, 5)
 
         # Память
         self.memory_states = []
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
     env = Game(screen, maps)
-    agent = DQL(num_layers=31)
+    agent = DQL(num_layers=30)
     env.generate_button()
 
     while True:
@@ -159,6 +159,7 @@ if __name__ == "__main__":
                 agent.train()
                 env.car.restart()
                 # agent.draw_plot()
+                env.zeroing_grad()
 
             if env.train_step == 20000:
                 EPS = 0
