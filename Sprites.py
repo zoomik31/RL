@@ -1,5 +1,6 @@
 import pygame
 import torch
+import math
 
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
@@ -11,40 +12,49 @@ GREEN = (0, 255, 0)
 PINK = (255,39,203)
 
 class Cell(pygame.sprite.Sprite):
-    def __init__(self, x, y, size, colour = RED):
+    def __init__(self, x, y, size, color = RED):
         pygame.sprite.Sprite.__init__(self)
-        self.obstacles_size = (size, size)
-        self.colour = colour
-        self.image = pygame.Surface(self.obstacles_size)
-        self.image.fill(self.colour)
+        self.size = size
+        self.color = color
+        self.image = pygame.Surface((self.size, self.size))
+        self.image.fill(self.color)
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
 
 class Border(Cell):
-    def __init__(self, x, y, size, colour=BLACK):
-        super().__init__(x, y, size, colour)
+    def __init__(self, x, y, size, color=BLACK):
+        super().__init__(x, y, size, color)
 
 class Flag(Cell):
-    def __init__(self, x, y, size, colour=YELLOW):
-        super().__init__(x, y, size, colour)
+    def __init__(self, x, y, size, color=YELLOW):
+        super().__init__(x, y, size, color)
+    
+    def draw(self, screen):
+        w_half, h_half = self.size/2, self.size/2
+        vertices = [
+            (-w_half, -h_half),
+            (w_half, -h_half),
+            (w_half, h_half),
+            (-w_half, h_half)]
+        pygame.draw.polygon(screen, self.color, vertices)
 
 class Empty(Cell):
-    def __init__(self, x, y, size, colour=WHITE):
-        super().__init__(x, y, size, colour)
+    def __init__(self, x, y, size, color=WHITE):
+        super().__init__(x, y, size, color)
 
 class Tree(Cell):
-    def __init__(self, x, y, size, colour=GREEN):
-       super().__init__(x, y, size, colour)
+    def __init__(self, x, y, size, color=GREEN):
+       super().__init__(x, y, size, color)
 
 class AddRewards(Cell):
-    def __init__(self, x, y, size, colour=PINK):
-       super().__init__(x, y, size, colour)
+    def __init__(self, x, y, size, color=PINK):
+       super().__init__(x, y, size, color)
 
 class Button(pygame.Surface):
     def __init__(self, x, y, text):
         pygame.Surface.__init__(self, (150, 50))
-        self.colour = WHITE
+        self.color = WHITE
         self.x = x
         self.y = y
         self.font = pygame.font.Font(None, 24)
@@ -53,7 +63,7 @@ class Button(pygame.Surface):
         self.text = text
     
     def create_button(self):
-        self.fill(self.colour)
+        self.fill(self.color)
 
         self.text_map = self.font.render(self.text, self.font_antialias, self.text_colour)
         
@@ -61,7 +71,6 @@ class Button(pygame.Surface):
         center=(self.get_width() /2, 
                 self.get_height()/2))
         
-        print(self.x, self.y)
         self.button_rect = self.get_rect(center=(self.x, self.y))
     
     def draw_button(self, screen):
@@ -89,7 +98,7 @@ class SaveModelButton(Button):
 class DirectionText(pygame.Surface):
     def __init__(self, x, y):
         pygame.Surface.__init__(self, (150, 50))
-        self.colour = WHITE
+        self.color = WHITE
         self.x = x
         self.y = y
         self.font = pygame.font.Font(None, 24)
@@ -97,7 +106,7 @@ class DirectionText(pygame.Surface):
         self.font_antialias = True
     
     def create_text(self, text):
-        self.fill(self.colour)
+        self.fill(self.color)
 
         self.text_dir = self.font.render(text, self.font_antialias, self.text_colour)
         
@@ -114,18 +123,19 @@ class DirectionText(pygame.Surface):
 
 
 class Car(pygame.sprite.Sprite):
-    def __init__(self, x=0, y=0, size=10):
+    def __init__(self, x=0, y=0, size=10, angle=0):
         pygame.sprite.Sprite.__init__(self)
-        self.car_size = (size, size)
-        self.image = pygame.Surface(self.car_size)
-        self.image.fill(RED)
-        self.rect = self.image.get_rect()
+        self.car_size = (size*2, size)
+        self.color = RED
         self.start_x = x
         self.start_y = y
-        self.rect.x = self.start_x
-        self.rect.y = self.start_y
+        self.start_angle = angle
+        self.x = self.start_x
+        self.y = self.start_y
         self.size = size
         self.direction = 'stop'
+        self.angle = 0
+        self.calculate_vertices()
 
     def restart(self):
         self.rect.x = self.start_x
@@ -136,20 +146,17 @@ class Car(pygame.sprite.Sprite):
         pass
 
     def go_right(self):
-        self.direction = "right"
-        self.rect.x += (self.size)
+        self.rotate(-3)
 
     def go_left(self):
-        self.direction = "left"
-        self.rect.x -= (self.size)
-        
+        self.rotate(3)
+
     def go_down(self):
         self.direction = "down"
         self.rect.y += (self.size)
 
     def go_up(self):
-        self.direction = "up"
-        self.rect.y -= (self.size)
+        pass
 
     def go_back(self):
         if self.direction == 'right':
@@ -160,3 +167,42 @@ class Car(pygame.sprite.Sprite):
             self.rect.y -= self.size
         if self.direction == 'up':
             self.rect.y += self.size
+    
+    def rotate(self, degrees):
+        """ Поворачивает спрайт на заданный угол """
+        self.angle += degrees
+        self.calculate_vertices()
+
+    def calculate_vertices(self):
+        """ Вычисляет вершины прямоугольника с учётом текущего угла поворота"""
+        w_half = self.car_size[0] / 2
+        h_half = self.car_size[1] / 2
+        center_x = self.x + w_half
+        center_y = self.y + h_half
+        
+        # Углы прямоугольника (до поворота)
+        vertices = [
+            (-w_half, -h_half),
+            (w_half, -h_half),
+            (w_half, h_half),
+            (-w_half, h_half)
+        ]
+        
+        # Применяем поворот каждой точки
+        rad_angle = math.radians(-self.angle)  # отрицательный угол для соответствия правилам координат
+        cos_a = math.cos(rad_angle)
+        sin_a = math.sin(rad_angle)
+        
+        for i in range(len(vertices)):
+            vx, vy = vertices[i]
+            nx = vx * cos_a - vy * sin_a
+            ny = vx * sin_a + vy * cos_a
+            
+            # Перемещаем точку обратно к центру спрайта
+            vertices[i] = (nx + center_x, ny + center_y)
+        
+        self.vertices = vertices
+    
+    def draw(self, screen):
+        """ Рисует повернутый спрайт на экране """
+        pygame.draw.polygon(screen, self.color, self.vertices)

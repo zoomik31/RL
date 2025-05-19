@@ -68,7 +68,7 @@ class Game():
             self.all_map.append(layer)
         
         self.car = Car(9 * self.size, 35 * self.size, self.size)
-        self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
+        # self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
             
     def generate_button(self):
         self.map_button_1 = MapButton(self.maps["map 1"][1][0], self.maps["map 1"][1][1], "1 map", self.maps["map 1"][0])
@@ -172,18 +172,18 @@ class Game():
 
     def run_game(self):
         self.reward = 0
-        self.measure_main_reward_distance()
-        if self.barriers_check():
-            self.reward = -130
-        elif self.flag_check():
-            self.reward = 150
+        # self.measure_main_reward_distance()
+        # if self.barriers_check():
+        #     self.reward = -130
+        # elif self.flag_check():
+        #     self.reward = 150
 
-        elif self.dist < self.prev_dist:
-            self.reward = 40
-        elif self.dist == self.prev_dist:
-            self.reward = 0
-        else:
-            self.reward = 10
+        # elif self.dist < self.prev_dist:
+        #     self.reward = 40
+        # elif self.dist == self.prev_dist:
+        #     self.reward = 0
+        # else:
+        #     self.reward = 10
 
         self.generate_text(self.screen)
 
@@ -191,8 +191,10 @@ class Game():
         self.forest.draw(self.screen)
         self.empty_space.draw(self.screen)
 
-        self.screen.blit(self.flag.image, self.flag.rect)
-        self.screen.blit(self.car.image, self.car.rect)
+        self.flag.draw(self.screen)
+        self.car.draw(self.screen)
+        # self.screen.blit(self.flag.image, self.flag.rect)
+        # self.screen.blit(self.car.image, self.car.rect)
         pygame.display.flip() 
 
     def print_state(self):
@@ -211,7 +213,7 @@ class Game():
                 elif event.key == pygame.K_UP:
                     self.car.go_up()
                 elif event.key == pygame.K_LEFT:
-                    self.print_state()
+                    self.car.go_left()
 
                     
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
