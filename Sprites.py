@@ -135,6 +135,7 @@ class Car(pygame.sprite.Sprite):
         self.size = size
         self.direction = 'stop'
         self.angle = 0
+        self.speed = 0
         self.calculate_vertices()
 
     def restart(self):
@@ -142,21 +143,29 @@ class Car(pygame.sprite.Sprite):
         self.rect.y = self.start_y
     
     def stand_stil(self):
-        self.direction = "stop"
         pass
-
+    
     def go_right(self):
-        self.rotate(-3)
+        if -1 < self.speed < 1:
+            pass
+        elif self.speed > 0:
+            self.rotate(-5)
+        else:
+            self.rotate(-5)
 
     def go_left(self):
-        self.rotate(3)
+        if -1 < self.speed < 1:
+            pass
+        elif self.speed > 0:
+            self.rotate(5)
+        else:
+            self.rotate(5)
 
     def go_down(self):
-        self.direction = "down"
-        self.rect.y += (self.size)
+        self.move_forward(-1)
 
     def go_up(self):
-        pass
+        self.move_forward(2)
 
     def go_back(self):
         if self.direction == 'right':
@@ -203,6 +212,58 @@ class Car(pygame.sprite.Sprite):
         
         self.vertices = vertices
     
+    def move_forward(self, speed = 1):
+        """ Движение вперёд под текущим углом поворота."""
+        print(self.speed)
+        if round(self.speed, 2) == 0:
+            pass
+        elif round(self.speed, 2) < 0:
+            self.speed += speed/3
+            rad_angle = math.radians(self.angle)
+            dx = self.speed * math.cos(rad_angle)
+            dy = self.speed * math.sin(rad_angle)
+            
+            # Изменяем позицию спрайта согласно компонентам скорости
+            self.x += dx
+            self.y -= dy  # Минус потому что ось Y направлена сверху вниз
+            self.calculate_vertices()  # Перерассчитываем вершины после смещения
+
+
+        elif speed == 1:
+            self.speed += -speed/3
+            rad_angle = math.radians(self.angle)
+            dx = self.speed * math.cos(rad_angle)
+            dy = self.speed * math.sin(rad_angle)
+            
+            # Изменяем позицию спрайта согласно компонентам скорости
+            self.x += dx
+            self.y -= dy  # Минус потому что ось Y направлена сверху вниз
+            self.calculate_vertices()  # Перерассчитываем вершины после смещения
+        if speed == 2:
+            self.speed += speed
+            rad_angle = math.radians(self.angle)
+            dx = self.speed * math.cos(rad_angle)
+            dy = self.speed * math.sin(rad_angle)
+            
+            # Изменяем позицию спрайта согласно компонентам скорости
+            self.x += dx
+            self.y -= dy  # Минус потому что ось Y направлена сверху вниз
+            self.calculate_vertices()  # Перерассчитываем вершины после смещения
+        
+        elif speed == -1:
+            self.speed += speed
+            rad_angle = math.radians(self.angle)
+            dx = self.speed * math.cos(rad_angle)
+            dy = self.speed * math.sin(rad_angle)
+            
+            # Изменяем позицию спрайта согласно компонентам скорости
+            self.x += dx
+            self.y -= dy  # Минус потому что ось Y направлена сверху вниз
+            self.calculate_vertices()  # Перерассчитываем вершины после смещения
+        # print(self.speed)
+    
+    
     def draw(self, screen):
         """ Рисует повернутый спрайт на экране """
+        self.move_forward()
         pygame.draw.polygon(screen, self.color, self.vertices)

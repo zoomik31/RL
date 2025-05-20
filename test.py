@@ -1,2 +1,4 @@
-a, b = 2, 2
-print(a, b)
+def motemotic(a, b=3):
+    return a+b
+
+print(motemotic(1, 2))

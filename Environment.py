@@ -25,7 +25,7 @@ EPS = 0.3
 class Game():
     def __init__(self, screen, maps):
         self.maps = maps
-        self.fps = 90
+        self.fps = 20
 
         self.empty_space = pygame.sprite.Group()
         self.border = pygame.sprite.Group()
@@ -207,7 +207,7 @@ class Game():
                 pygame.quit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_DOWN:
-                    self.reset_add_reward()
+                    self.car.go_down()
                 elif event.key == pygame.K_RIGHT:
                     self.car.go_right()
                 elif event.key == pygame.K_UP:
