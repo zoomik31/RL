@@ -29,15 +29,6 @@ class Border(Cell):
 class Flag(Cell):
     def __init__(self, x, y, size, color=YELLOW):
         super().__init__(x, y, size, color)
-    
-    def draw(self, screen):
-        w_half, h_half = self.size/2, self.size/2
-        vertices = [
-            (-w_half, -h_half),
-            (w_half, -h_half),
-            (w_half, h_half),
-            (-w_half, h_half)]
-        pygame.draw.polygon(screen, self.color, vertices)
 
 class Empty(Cell):
     def __init__(self, x, y, size, color=WHITE):
@@ -45,10 +36,6 @@ class Empty(Cell):
 
 class Tree(Cell):
     def __init__(self, x, y, size, color=GREEN):
-       super().__init__(x, y, size, color)
-
-class AddRewards(Cell):
-    def __init__(self, x, y, size, color=PINK):
        super().__init__(x, y, size, color)
 
 class Button(pygame.Surface):
@@ -123,7 +110,7 @@ class DirectionText(pygame.Surface):
 
 
 class Car(pygame.sprite.Sprite):
-    def __init__(self, x=0, y=0, size=10, angle=0):
+    def __init__(self, screen, x=0, y=0, size=10, angle=0):
         pygame.sprite.Sprite.__init__(self)
         self.car_size = (size*2, size)
         self.color = RED
@@ -133,25 +120,37 @@ class Car(pygame.sprite.Sprite):
         self.x = self.start_x
         self.y = self.start_y
         self.size = size
-        self.direction = 'stop'
+        self.direction = 'Stop'
+        self.forward_border = False
+        self.back_border = False
         self.angle = 0
         self.speed = 0
+        self.sensors_color = PINK
+        self.sensors_len = self.car_size[1]
+        
+        self.screen = screen
         self.calculate_vertices()
 
     def restart(self):
-        self.rect.x = self.start_x
-        self.rect.y = self.start_y
+        self.x = self.start_x
+        self.y = self.start_y
+        self.angle = self.start_angle
+        self.speed = 0
+        self.calculate_vertices()
     
     def stand_stil(self):
         pass
-    
+
+    def emergency_braking(self):
+        self.speed = 0
+
     def go_right(self):
         if -1 < self.speed < 1:
             pass
         elif self.speed > 0:
             self.rotate(-5)
         else:
-            self.rotate(-5)
+            self.rotate(5)
 
     def go_left(self):
         if -1 < self.speed < 1:
@@ -159,7 +158,7 @@ class Car(pygame.sprite.Sprite):
         elif self.speed > 0:
             self.rotate(5)
         else:
-            self.rotate(5)
+            self.rotate(-5)
 
     def go_down(self):
         self.move_forward(-1)
@@ -168,14 +167,7 @@ class Car(pygame.sprite.Sprite):
         self.move_forward(2)
 
     def go_back(self):
-        if self.direction == 'right':
-            self.rect.x -= self.size
-        if self.direction == 'left':
-            self.rect.x += self.size
-        if self.direction == 'down':
-            self.rect.y -= self.size
-        if self.direction == 'up':
-            self.rect.y += self.size
+        pass
     
     def rotate(self, degrees):
         """ Поворачивает спрайт на заданный угол """
@@ -184,17 +176,17 @@ class Car(pygame.sprite.Sprite):
 
     def calculate_vertices(self):
         """ Вычисляет вершины прямоугольника с учётом текущего угла поворота"""
-        w_half = self.car_size[0] / 2
-        h_half = self.car_size[1] / 2
-        center_x = self.x + w_half
-        center_y = self.y + h_half
+        self.w_half = self.car_size[0] / 2
+        self.h_half = self.car_size[1] / 2
+        self.center_x = self.x + self.w_half
+        self.center_y = self.y + self.h_half
         
         # Углы прямоугольника (до поворота)
         vertices = [
-            (-w_half, -h_half),
-            (w_half, -h_half),
-            (w_half, h_half),
-            (-w_half, h_half)
+            (-self.w_half, -self.h_half),
+            (self.w_half, -self.h_half),
+            (self.w_half, self.h_half),
+            (-self.w_half, self.h_half)
         ]
         
         # Применяем поворот каждой точки
@@ -208,17 +200,54 @@ class Car(pygame.sprite.Sprite):
             ny = vx * sin_a + vy * cos_a
             
             # Перемещаем точку обратно к центру спрайта
-            vertices[i] = (nx + center_x, ny + center_y)
+            vertices[i] = (nx + self.center_x, ny + self.center_y)
         
         self.vertices = vertices
+        self.calculate_sensors()
     
-    def move_forward(self, speed = 1):
+    def calculate_sensors(self):
+        vertexes = []
+        vertexes.append((self.w_half, (int((self.w_half+self.w_half)+(-self.h_half+self.h_half)))/2))
+        vertexes.append(self.vertices[1])
+        vertexes.append(((int((-self.w_half+self.w_half)+(-self.h_half-self.h_half)))/2, self.h_half))
+        vertexes.append(self.vertices[0])
+        vertexes.append((-self.w_half, (int((-self.w_half-self.w_half)+(-self.h_half+self.h_half)))/2))
+        vertexes.append(self.vertices[3])
+        vertexes.append(((int((-self.w_half + self.w_half)+(self.h_half+self.h_half)))/2, -self.h_half))
+        vertexes.append(self.vertices[2])
+
+        for i, vertex in enumerate(vertexes):
+            radians = math.radians((self.angle+180) + i*45)
+            rel_x = (vertex[0] + self.sensors_len)- vertex[0]
+            rel_y = (vertex[1] + self.sensors_len)-vertex[0]
+
+            new_rel_x = rel_x * math.sin(radians) - rel_y * math.cos(radians)
+            new_rel_y = rel_x * math.cos(radians) + rel_y * math.sin(radians)
+
+            # Нормализация вектора направления и умножение на длину луча
+            # length = math.sqrt(dir_x ** 2 + dir_y ** 2)
+            # norm_dir_x = dir_x / 10
+            # norm_dir_y = dir_y / 10
+
+            # Конечная точка луча
+            end_point = (
+                vertex[0] + (new_rel_x),
+                vertex[1] + new_rel_y
+            )
+            self.draw_sensors(vertex, end_point)
+
+    def draw_sensors(self, vertex, end_point):
+        pygame.draw.line(self.screen, self.sensors_color, vertex, end_point, 3)
+
+
+
+    def move_forward(self, speed = 3):
         """ Движение вперёд под текущим углом поворота."""
-        print(self.speed)
         if round(self.speed, 2) == 0:
+            self.calculate_vertices()
             pass
-        elif round(self.speed, 2) < 0:
-            self.speed += speed/3
+        elif round(self.speed, 2) < 0.33:
+            self.speed += speed/9
             rad_angle = math.radians(self.angle)
             dx = self.speed * math.cos(rad_angle)
             dy = self.speed * math.sin(rad_angle)
@@ -229,8 +258,8 @@ class Car(pygame.sprite.Sprite):
             self.calculate_vertices()  # Перерассчитываем вершины после смещения
 
 
-        elif speed == 1:
-            self.speed += -speed/3
+        elif speed == 3:
+            self.speed += -speed/9
             rad_angle = math.radians(self.angle)
             dx = self.speed * math.cos(rad_angle)
             dy = self.speed * math.sin(rad_angle)
@@ -239,7 +268,8 @@ class Car(pygame.sprite.Sprite):
             self.x += dx
             self.y -= dy  # Минус потому что ось Y направлена сверху вниз
             self.calculate_vertices()  # Перерассчитываем вершины после смещения
-        if speed == 2:
+        
+        if speed == 2 or speed == 1:
             self.speed += speed
             rad_angle = math.radians(self.angle)
             dx = self.speed * math.cos(rad_angle)
@@ -260,10 +290,12 @@ class Car(pygame.sprite.Sprite):
             self.x += dx
             self.y -= dy  # Минус потому что ось Y направлена сверху вниз
             self.calculate_vertices()  # Перерассчитываем вершины после смещения
-        # print(self.speed)
+        print(self.speed)
     
     
-    def draw(self, screen):
+    def draw(self):
         """ Рисует повернутый спрайт на экране """
         self.move_forward()
-        pygame.draw.polygon(screen, self.color, self.vertices)
+        pygame.draw.polygon(self.screen, self.color, self.vertices)
+
+   

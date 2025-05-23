@@ -67,7 +67,7 @@ class Game():
 
             self.all_map.append(layer)
         
-        self.car = Car(9 * self.size, 35 * self.size, self.size)
+        self.car = Car(screen, 9 * self.size, 35 * self.size, self.size)
         # self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
             
     def generate_button(self):
@@ -93,18 +93,58 @@ class Game():
 
 
     def barriers_check(self):
-        if pygame.sprite.spritecollideany(self.car, self.forest) or pygame.sprite.spritecollideany(self.car, self.border):
-            self.car.go_back()
-            return True
+        obstacles = pygame.sprite.Group()
+        obstacles.add(self.forest)
+        obstacles.add(self.border)
+        self.car.forward_border = False
+        self.car.back_border = False
+        for obstacle in obstacles:
+            top_left, top_right, bottom_right, bottom_left = self.car.vertices
+            # if (
+            #     ((obstacle.rect.x <= top_right[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= top_right[1] <= obstacle.rect.y+obstacle.size)) or
+            #     ((obstacle.rect.x <= bottom_right[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= bottom_right[1] <= obstacle.rect.y+obstacle.size)) or
+            #     ((obstacle.rect.x <= top_left[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= top_left[1] <= obstacle.rect.y+obstacle.size)) or
+            #     ((obstacle.rect.x <= bottom_left[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= bottom_left[1] <= obstacle.rect.y+obstacle.size))
+
+            # ):
+            #     print('s')
+            if (
+                ((obstacle.rect.x <= top_right[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= top_right[1] <= obstacle.rect.y+obstacle.size)) or
+                ((obstacle.rect.x <= bottom_right[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= bottom_right[1] <= obstacle.rect.y+obstacle.size))
+                ):
+                self.car.forward_border = True
+                self.car.back_border = False
+                self.car.emergency_braking()
+                return True
+            elif (
+                ((obstacle.rect.x <= top_left[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= top_left[1] <= obstacle.rect.y+obstacle.size)) or
+                ((obstacle.rect.x <= bottom_left[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= bottom_left[1] <= obstacle.rect.y+obstacle.size))
+                ):
+                self.car.forward_border = False
+                self.car.back_border = True
+                self.car.emergency_braking()
+                return True
+        return False
 
     def flag_check(self):
-        if pygame.sprite.collide_rect(self.car, self.flag):
-            self.car.restart()
-            return True
+        top_left, top_right, bottom_right, bottom_left = self.car.vertices
+
+        # Проходим по спрайтам и проверяем коллизию
+        if (
+                ((self.flag.rect.x <= top_left[0] <= self.flag.rect.x+self.flag.size) and (self.flag.rect.y <= top_left[1] <= self.flag.rect.y+self.flag.size)) or
+                ((self.flag.rect.x <= top_right[0] <= self.flag.rect.x+self.flag.size) and (self.flag.rect.y <= top_right[1] <= self.flag.rect.y+self.flag.size)) or 
+                ((self.flag.rect.x <= bottom_left[0] <= self.flag.rect.x+self.flag.size) and (self.flag.rect.y <= bottom_left[1] <= self.flag.rect.y+self.flag.size)) or 
+                ((self.flag.rect.x <= bottom_right[0] <= self.flag.rect.x+self.flag.size) and (self.flag.rect.y <= bottom_right[1] <= self.flag.rect.y+self.flag.size))
+            ):
+                self.car.restart()
+                return True
+        return False
+
         
     def measure_main_reward_distance(self):
         self.prev_dist = self.dist
         self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
+    
     
     def get_state(self):
 
@@ -172,6 +212,14 @@ class Game():
 
     def run_game(self):
         self.reward = 0
+        self.flag_check()
+        barrier_chek = self.barriers_check()
+        while self.barriers_check():
+            if self.car.forward_border:
+                self.car.move_forward(-1)
+            elif self.car.back_border:
+                self.car.move_forward(1)
+            self.car.calculate_vertices()
         # self.measure_main_reward_distance()
         # if self.barriers_check():
         #     self.reward = -130
@@ -191,9 +239,8 @@ class Game():
         self.forest.draw(self.screen)
         self.empty_space.draw(self.screen)
 
-        self.flag.draw(self.screen)
-        self.car.draw(self.screen)
-        # self.screen.blit(self.flag.image, self.flag.rect)
+        self.car.draw()
+        self.screen.blit(self.flag.image, self.flag.rect)
         # self.screen.blit(self.car.image, self.car.rect)
         pygame.display.flip() 
 

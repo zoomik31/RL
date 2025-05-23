@@ -1,78 +1,62 @@
-import math
 import pygame
+import math
 
-class RotatableSprite(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, color=(255, 0, 0)):
-        super().__init__()
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.color = color
-        self.angle = 0  # начальный угол поворота
-        self.calculate_vertices()  # вычисляем вершины фигуры
-
-    def calculate_vertices(self):
-        """ Вычисляет вершины прямоугольника с учётом текущего угла поворота"""
-        w_half = self.width / 2
-        h_half = self.height / 2
-        center_x = self.x + w_half
-        center_y = self.y + h_half
-        
-        # Углы прямоугольника (до поворота)
-        vertices = [
-            (-w_half, -h_half),
-            (w_half, -h_half),
-            (w_half, h_half),
-            (-w_half, h_half)
-        ]
-        
-        # Применяем поворот каждой точки
-        rad_angle = math.radians(-self.angle)  # отрицательный угол для соответствия правилам координат
-        cos_a = math.cos(rad_angle)
-        sin_a = math.sin(rad_angle)
-        
-        for i in range(len(vertices)):
-            vx, vy = vertices[i]
-            nx = vx * cos_a - vy * sin_a
-            ny = vx * sin_a + vy * cos_a
-            
-            # Перемещаем точку обратно к центру спрайта
-            vertices[i] = (nx + center_x, ny + center_y)
-        
-        self.vertices = vertices
-
-    def draw(self, screen):
-        """ Рисует повернутый спрайт на экране """
-        pygame.draw.polygon(screen, self.color, self.vertices)
-
-    def rotate(self, degrees):
-        """ Поворачивает спрайт на заданный угол """
-        self.angle += degrees
-        self.calculate_vertices()
-
-# Основная игра
+# Инициализируем окно
 pygame.init()
 screen = pygame.display.set_mode((800, 600))
 clock = pygame.time.Clock()
 
-sprite = RotatableSprite(x=400, y=300, width=100, height=50)
+# Цвета
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+
+# Начальная и конечная точки вектора
+vector_start = (200, 300)
+vector_end = (400, 300)
+
+# Угол поворота в градусах
+angle_in_degrees = 45
+
+def rotate_vector(start, end, angle):
+    """ Функция для поворота вектора """
+    # Переводим угол из градусов в радианы
+    theta = math.radians(angle)
+    
+    # Рассчитываем дельту координат
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    
+    # Формула поворота
+    new_dx = dx * math.cos(theta) - dy * math.sin(theta)
+    new_dy = dx * math.sin(theta) + dy * math.cos(theta)
+    
+    # Новая конечная точка
+    new_end = (
+        start[0] + int(new_dx),
+        start[1] + int(new_dy)
+    )
+    return new_end
 
 running = True
 while running:
-    clock.tick(60)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
     
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
-        sprite.rotate(1)  # поворачиваем налево
-    elif keys[pygame.K_RIGHT]:
-        sprite.rotate(-1)  # поворачиваем направо
+    # Очистка экрана
+    screen.fill(BLACK)
     
-    screen.fill((255, 255, 255))  # очищаем экран белым цветом
-    sprite.draw(screen)  # рисуем спрайт
-    pygame.display.flip()
+    # Исходная линия
+    pygame.draw.line(screen, RED, vector_start, vector_end, 3)
+    
+    # Новый конец линии после поворота
+    rotated_end = rotate_vector(vector_start, vector_end, angle_in_degrees)
+    
+    # Нарисовать новую линию
+    pygame.draw.line(screen, (0, 255, 0), vector_start, rotated_end, 3)
+    
+    # Обновление дисплея
+    pygame.display.update()
+    clock.tick(60)
 
 pygame.quit()
