@@ -135,6 +135,7 @@ if __name__ == "__main__":
     env = Game(screen, maps)
     agent = DQL(num_layers=12)
     env.generate_button()
+    agent.rollback()
 
     while True:
         screen.fill((155, 255, 155))
@@ -152,7 +153,7 @@ if __name__ == "__main__":
                 print(env.train_step)
                 agent.train()
                 env.car.restart()
-                agent.draw_plot()
+                # agent.draw_plot()
 
             if env.train_step == 3500:
                 EPS = 0
@@ -164,4 +165,4 @@ if __name__ == "__main__":
             env.map_button_1.draw_button(screen)
             env.map_button_2.draw_button(screen)
             env.map_button_3.draw_button(screen)
-            pygame.display.flip() 
+            pygame.display.flip()
