@@ -203,23 +203,23 @@ class Car(pygame.sprite.Sprite):
             vertices[i] = (nx + self.center_x, ny + self.center_y)
         
         self.vertices = vertices
-        self.calculate_sensors()
     
     def calculate_sensors(self):
         vertexes = []
-        vertexes.append((self.w_half, (int((self.w_half+self.w_half)+(-self.h_half+self.h_half)))/2))
+        vertexes.append((self.w_half + self.center_x, self.center_y))
         vertexes.append(self.vertices[1])
-        vertexes.append(((int((-self.w_half+self.w_half)+(-self.h_half-self.h_half)))/2, self.h_half))
+        vertexes.append((self.center_x, -self.h_half+ self.center_y))
         vertexes.append(self.vertices[0])
-        vertexes.append((-self.w_half, (int((-self.w_half-self.w_half)+(-self.h_half+self.h_half)))/2))
+        vertexes.append((-self.w_half+ self.center_x, self.center_y))
         vertexes.append(self.vertices[3])
-        vertexes.append(((int((-self.w_half + self.w_half)+(self.h_half+self.h_half)))/2, -self.h_half))
+        vertexes.append((self.center_x, self.h_half + self.center_y))
         vertexes.append(self.vertices[2])
-
+        print(vertexes)
         for i, vertex in enumerate(vertexes):
             radians = math.radians((self.angle+180) + i*45)
-            rel_x = (vertex[0] + self.sensors_len)- vertex[0]
-            rel_y = (vertex[1] + self.sensors_len)-vertex[0]
+            rel_x = (vertex[0] + self.sensors_len)
+            
+            rel_y = (vertex[1] + self.sensors_len)
 
             new_rel_x = rel_x * math.sin(radians) - rel_y * math.cos(radians)
             new_rel_y = rel_x * math.cos(radians) + rel_y * math.sin(radians)
@@ -246,7 +246,7 @@ class Car(pygame.sprite.Sprite):
         if round(self.speed, 2) == 0:
             self.calculate_vertices()
             pass
-        elif round(self.speed, 2) < 0.33:
+        elif round(self.speed, 2) < 0:
             self.speed += speed/9
             rad_angle = math.radians(self.angle)
             dx = self.speed * math.cos(rad_angle)
@@ -290,7 +290,9 @@ class Car(pygame.sprite.Sprite):
             self.x += dx
             self.y -= dy  # Минус потому что ось Y направлена сверху вниз
             self.calculate_vertices()  # Перерассчитываем вершины после смещения
-        print(self.speed)
+
+        self.calculate_sensors()
+
     
     
     def draw(self):
