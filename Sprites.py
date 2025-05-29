@@ -125,11 +125,14 @@ class Car(pygame.sprite.Sprite):
         self.back_border = False
         self.angle = 0
         self.speed = 0
-        self.sensors_color = PINK
-        self.sensors_len = self.car_size[1]
+        self.sensor_color = PINK
+        self.sensor_len = self.car_size[1]
+        self.sensor_collide = False
+        self.sensors = []
         
         self.screen = screen
         self.calculate_vertices()
+        self.calculate_sensors()
 
     def restart(self):
         self.x = self.start_x
@@ -165,9 +168,6 @@ class Car(pygame.sprite.Sprite):
 
     def go_up(self):
         self.move_forward(2)
-
-    def go_back(self):
-        pass
     
     def rotate(self, degrees):
         """ Поворачивает спрайт на заданный угол """
@@ -203,24 +203,16 @@ class Car(pygame.sprite.Sprite):
             vertices[i] = (nx + self.center_x, ny + self.center_y)
         
         self.vertices = vertices
+        
     
     def calculate_sensors(self):
-        vertexes = []
-        vertexes.append((self.w_half + self.center_x, self.center_y))
-        vertexes.append(self.vertices[1])
-        vertexes.append((self.center_x, -self.h_half+ self.center_y))
-        vertexes.append(self.vertices[0])
-        vertexes.append((-self.w_half+ self.center_x, self.center_y))
-        vertexes.append(self.vertices[3])
-        vertexes.append((self.center_x, self.h_half + self.center_y))
-        vertexes.append(self.vertices[2])
-        print(vertexes)
-        for i, vertex in enumerate(vertexes):
-            radians = math.radians((self.angle+180) + i*45)
-            rel_x = (vertex[0] + self.sensors_len)
-            
-            rel_y = (vertex[1] + self.sensors_len)
-
+        self.sensors = []
+        for i in range(8):
+            rel_x = 0
+            rel_y = 0
+            radians = math.radians((self.angle) + i*45)
+            rel_x = self.sensor_len*2
+            rel_y = self.sensor_len*2
             new_rel_x = rel_x * math.sin(radians) - rel_y * math.cos(radians)
             new_rel_y = rel_x * math.cos(radians) + rel_y * math.sin(radians)
 
@@ -231,15 +223,31 @@ class Car(pygame.sprite.Sprite):
 
             # Конечная точка луча
             end_point = (
-                vertex[0] + (new_rel_x),
-                vertex[1] + new_rel_y
+                self.center_x + new_rel_x,
+                self.center_y + new_rel_y
             )
-            self.draw_sensors(vertex, end_point)
+
+            # start_vect = (self.center_x, self.center_y)
+            # radians = math.radians((self.angle) + i*45)
+            # end_vect = ((start_vect[0] * math.cos(radians)), (start_vect[1] * math.sin(radians)))
+
+            # dx = end_vect[0] - start_vect[0]
+            # dy = end_vect[1] - start_vect[1]
+
+            # new_dx = dx * math.cos(radians) - dy * math.sin(radians)
+            # new_dy = dx * math.sin(radians) + dy * math.cos(radians)
+
+            # end_point = (
+            # start_vect[0] + int(new_dx),
+            # start_vect[1] + int(new_dy)
+            # )
+
+            self.sensors.append((end_point))
+
+            self.draw_sensors((self.center_x, self.center_y), end_point)
 
     def draw_sensors(self, vertex, end_point):
-        pygame.draw.line(self.screen, self.sensors_color, vertex, end_point, 3)
-
-
+        pygame.draw.line(self.screen, self.sensor_color, vertex, end_point, 3)
 
     def move_forward(self, speed = 3):
         """ Движение вперёд под текущим углом поворота."""
@@ -269,7 +277,17 @@ class Car(pygame.sprite.Sprite):
             self.y -= dy  # Минус потому что ось Y направлена сверху вниз
             self.calculate_vertices()  # Перерассчитываем вершины после смещения
         
-        if speed == 2 or speed == 1:
+        if self.speed >= 10 or self.speed <= -5:
+            rad_angle = math.radians(self.angle)
+            dx = self.speed * math.cos(rad_angle)
+            dy = self.speed * math.sin(rad_angle)
+            
+            # Изменяем позицию спрайта согласно компонентам скорости
+            self.x += dx
+            self.y -= dy  # Минус потому что ось Y направлена сверху вниз
+            self.calculate_vertices()  # Перерассчитываем вершины после смещения
+            
+        elif speed == 2 or speed == 1:
             self.speed += speed
             rad_angle = math.radians(self.angle)
             dx = self.speed * math.cos(rad_angle)

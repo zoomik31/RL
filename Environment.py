@@ -31,6 +31,8 @@ class Game():
         self.border = pygame.sprite.Group()
         self.forest = pygame.sprite.Group()
 
+        self.bottom_surface = pygame.surface.Surface((840, 110))
+
         self.all_map = []
         self.size = 20
         
@@ -67,8 +69,8 @@ class Game():
 
             self.all_map.append(layer)
         
-        self.car = Car(screen, 9 * self.size, 35 * self.size, self.size)
-        # self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
+        self.car = Car(self.screen, 9 * self.size, 35 * self.size, self.size)
+        self.dist = math.sqrt((self.car.center_x-self.flag.rect.x)**2 + (self.car.center_y-self.flag.rect.y)**2)
             
     def generate_button(self):
         self.map_button_1 = MapButton(self.maps["map 1"][1][0], self.maps["map 1"][1][1], "1 map", self.maps["map 1"][0])
@@ -86,8 +88,8 @@ class Game():
         self.save_button.create_button()
     
     def generate_text(self, screen):
-        self.dir_text = DirectionText(400, 900)
-        self.dir_text.create_text(self.car.direction)
+        self.dir_text = DirectionText(400, 60)
+        self.dir_text.create_text(str(abs(round(self.car.speed))))
 
         self.dir_text.draw_dir_text(screen)
 
@@ -100,14 +102,7 @@ class Game():
         self.car.back_border = False
         for obstacle in obstacles:
             top_left, top_right, bottom_right, bottom_left = self.car.vertices
-            # if (
-            #     ((obstacle.rect.x <= top_right[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= top_right[1] <= obstacle.rect.y+obstacle.size)) or
-            #     ((obstacle.rect.x <= bottom_right[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= bottom_right[1] <= obstacle.rect.y+obstacle.size)) or
-            #     ((obstacle.rect.x <= top_left[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= top_left[1] <= obstacle.rect.y+obstacle.size)) or
-            #     ((obstacle.rect.x <= bottom_left[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= bottom_left[1] <= obstacle.rect.y+obstacle.size))
 
-            # ):
-            #     print('s')
             if (
                 ((obstacle.rect.x <= top_right[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= top_right[1] <= obstacle.rect.y+obstacle.size)) or
                 ((obstacle.rect.x <= bottom_right[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= bottom_right[1] <= obstacle.rect.y+obstacle.size))
@@ -116,6 +111,7 @@ class Game():
                 self.car.back_border = False
                 self.car.emergency_braking()
                 return True
+            
             elif (
                 ((obstacle.rect.x <= top_left[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= top_left[1] <= obstacle.rect.y+obstacle.size)) or
                 ((obstacle.rect.x <= bottom_left[0] <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= bottom_left[1] <= obstacle.rect.y+obstacle.size))
@@ -140,58 +136,47 @@ class Game():
                 return True
         return False
 
+    def sensors_check(self):
+        self.objects_nearby = []
+        obstacles = pygame.sprite.Group()
+        obstacles.add(self.forest)
+        obstacles.add(self.border)
         
+        for i, sensor in enumerate(self.car.sensors):
+            sensor_x, sensor_y = sensor
+            for obstacle in obstacles:
+                if (
+                    (obstacle.rect.x <= sensor_x <= obstacle.rect.x+obstacle.size) and (obstacle.rect.y <= sensor_y <= obstacle.rect.y+obstacle.size)
+                    ):
+                    dist = self.obstacle_distance(obstacle)
+                    self.objects_nearby.append((obstacle.rect.x, obstacle.rect.y, dist))
+                    break
+            
+            if  (
+                (self.flag.rect.x <= sensor_x <= self.flag.rect.x+self.flag.size) and (self.flag.rect.y <= sensor_y <= self.flag.rect.y+self.flag.size)
+                ):
+                dist = self.obstacle_distance(self.flag)
+                self.objects_nearby.append((self.flag.rect.x, self.flag.rect.y, dist))
+                
+            while len(self.objects_nearby) != i+1:
+                self.objects_nearby.append((0, 0, 0))    
+
+    def obstacle_distance(self, obstacle):
+        return math.sqrt((self.car.center_x-obstacle.rect.center[0])**2 + (self.car.center_y-obstacle.rect.center[1])**2)
+
     def measure_main_reward_distance(self):
         self.prev_dist = self.dist
-        self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
+        self.dist = math.sqrt((self.car.center_x-self.flag.rect.x)**2 + (self.car.center_y-self.flag.rect.y)**2)
     
     
     def get_state(self):
+        self.sensors_check()
+        list_state = self.objects_nearby.copy()
 
-        state = []
-
-        # self.car.go_right()
-        # if self.barriers_check():
-        #     self.block_right = True
-        # else: 
-        #     self.car.go_back()
-        #     self.block_right = False
+        list_state.append((self.car.x, self.car.y, self.car.speed, self.car.angle))
+        list_state.append((self.flag.rect.center[0], self.flag.rect.center[1], self.dist))
         
-        # self.car.go_left()
-        # if self.barriers_check():
-        #     self.block_left = True
-        # else: 
-        #     self.car.go_back()
-        #     self.block_left = False
-        
-        # self.car.go_down()
-        # if self.barriers_check():
-        #     self.block_down = True
-        # else: 
-        #     self.car.go_back()
-        #     self.block_down = False
-        
-        # self.car.go_up()
-        # if self.barriers_check():
-        #     self.block_up = True
-        # else: 
-        #     self.car.go_back()
-        #     self.block_up = False
-        
-        # state = [int(self.car.rect.x < self.flag.rect.x), int(self.car.rect.y < self.flag.rect.y),
-        #             int(self.car.rect.x > self.flag.rect.x), int(self.car.rect.y > self.flag.rect.y),
-        #             int(self.block_up), int(self.block_right),int(self.block_down),int(self.block_left),
-        #             int(self.car.direction == "up"), int(self.car.direction == "right"), int(self.car.direction == "down"), int(self.car.direction == "left")
-        # ]
-
-        for y in range(int(self.car.rect.y/self.size)-2, (int(self.car.rect.y/self.size)+3)):
-            for x in range(int(self.car.rect.x/self.size)-2, int(self.car.rect.x/self.size)+3):
-                state.append(self.all_map[y][x])
-        
-        state.append(int(self.car.direction == "up"))
-        state.append(int(self.car.direction == "right"))
-        state.append(int(self.car.direction == "down"))
-        state.append(int(self.car.direction == "left"))
+        state = [i for sub in list_state for i in sub]
 
         return state
 
@@ -213,39 +198,37 @@ class Game():
     def run_game(self):
         self.reward = 0
         self.flag_check()
-        barrier_chek = self.barriers_check()
+        barrier_check = self.barriers_check()
         while self.barriers_check():
             if self.car.forward_border:
                 self.car.move_forward(-1)
             elif self.car.back_border:
                 self.car.move_forward(1)
             self.car.calculate_vertices()
-        # self.measure_main_reward_distance()
-        # if self.barriers_check():
-        #     self.reward = -130
-        # elif self.flag_check():
-        #     self.reward = 150
-
-        # elif self.dist < self.prev_dist:
-        #     self.reward = 40
-        # elif self.dist == self.prev_dist:
-        #     self.reward = 0
-        # else:
-        #     self.reward = 10
-
-        self.generate_text(self.screen)
-
+        
+        self.measure_main_reward_distance()
+        if barrier_check:
+            self.reward = -130
+        elif self.flag_check():
+            self.reward = 150
+        elif self.dist < self.prev_dist:
+            self.reward = 40
+        elif self.dist == self.prev_dist:
+            self.reward = 0
+        else:
+            self.reward = 10
+        
+        self.button_tracking()
         self.border.draw(self.screen)
         self.forest.draw(self.screen)
         self.empty_space.draw(self.screen)
 
         self.car.draw()
         self.screen.blit(self.flag.image, self.flag.rect)
-        # self.screen.blit(self.car.image, self.car.rect)
+        self.screen.blit(self.bottom_surface, (0, 841))
+        self.bottom_surface.fill(GREEN)
+        self.generate_text(self.bottom_surface)
         pygame.display.flip() 
-
-    def print_state(self):
-        print(self.dist)
 
     def button_tracking(self):
         for event in pygame.event.get():

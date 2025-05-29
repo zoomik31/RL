@@ -8,17 +8,16 @@ from Environment import *
 import random
 import matplotlib.pyplot as plt
 
-EPS = 0.4
+EPS = 0.3
 
 class DQL(nn.Module):
-    def __init__(self, LearningRate=0.01, num_layers=9):
+    def __init__(self, LearningRate=0.02, num_layers=9):
 
         super().__init__()
         # Слои
-        self.inp = nn.Linear(num_layers, 96)
-        self.hidden1 = nn.Linear(96, 96)
-        self.hidden2 = nn.Linear(96, 96)
-        self.out = nn.Linear(96, 5)
+        self.inp = nn.Linear(num_layers, 16)
+        self.hidden1 = nn.Linear(16, 16)
+        self.out = nn.Linear(16, 5)
 
         # Память
         self.memory_states = []
@@ -40,7 +39,6 @@ class DQL(nn.Module):
     def forward(self, x):
         x = self.activation(self.inp(x))
         x = self.activation(self.hidden1(x))
-        x = self.activation(self.hidden2(x))
         x = self.activation(self.out(x))
         return x
     
@@ -92,7 +90,7 @@ class DQL(nn.Module):
             self.inp.weight.grad.data += t.FloatTensor([0.001]).cpu()
         self.optimizer.step()
 
-        print(f"Ошибка: {loss}")
+        # print(f"Ошибка: {loss}")
     
     def draw_plot(self):
         self.epoch.append(self.epochs_num)
@@ -141,7 +139,7 @@ if __name__ == "__main__":
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
     env = Game(screen, maps)
-    agent = DQL(num_layers=29)
+    agent = DQL(num_layers=31)
     env.generate_button()
 
     while True:
@@ -156,15 +154,18 @@ if __name__ == "__main__":
             agent.game()
             agent.save_button_tracking()
 
-
-            if env.train_step % 200 == 0:
+            if env.train_step % 500 == 0:
                 print(env.train_step)
                 agent.train()
                 env.car.restart()
                 #agent.draw_plot()
-
-            # if env.train_step == 10000:
-            #     EPS = 0
+            
+            elif env.train_step % 50 == 0:
+                print(env.train_step)
+                agent.train()
+            # agent.train()
+            if env.train_step == 10000:
+                EPS = 0
             
             env.train_step += 1
         else:
