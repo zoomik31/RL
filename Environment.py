@@ -31,6 +31,7 @@ class Game():
         self.border = pygame.sprite.Group()
         self.forest = pygame.sprite.Group()
         # self.size = WIDTH/len(self.map)
+        self.all_map = []
         self.size = 20
         self.train_step = 1
         self.screen = screen
@@ -45,18 +46,23 @@ class Game():
                 if self.map[y][x] == 1:
                     brd = Border(x*self.size, y*self.size, self.size)
                     self.border.add(brd)
+                    layer.append(1)
                 
                 elif self.map[y][x] == 2:
                     self.flag = Flag(x*self.size, y*self.size, self.size)
+                    layer.append(2)
 
                 elif self.map[y][x] == 3:
                     tree = Tree(x*self.size, y*self.size, self.size)
                     self.forest.add(tree)
+                    layer.append(3)
 
                 else:
                     emp = Empty(x*self.size, y*self.size, self.size)
                     self.empty_space.add(emp)
-        
+                    layer.append(0)
+
+            self.all_map.append(layer)
         self.car = Car(9 * self.size, 35 * self.size, self.size)
         self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
     
@@ -127,6 +133,21 @@ class Game():
                     int(self.block_up), int(self.block_right),int(self.block_down),int(self.block_left),
                     int(self.car.direction == "up"), int(self.car.direction == "right"), int(self.car.direction == "down"), int(self.car.direction == "left")
         ]
+
+        # for y in range(int(self.car.rect.y/self.size)-2, (int(self.car.rect.y/self.size)+3)):
+        #     for x in range(int(self.car.rect.x/self.size)-2, int(self.car.rect.x/self.size)+3):
+        #         state.append(self.all_map[y][x])
+        
+        state.append(int(self.car.direction == "up"))
+        state.append(int(self.car.direction == "right"))
+        state.append(int(self.car.direction == "down"))
+        state.append(int(self.car.direction == "left"))
+        # state.append(self.car.rect.x/self.size)
+        # state.append(self.car.rect.y/self.size)
+        # state.append(self.flag.rect.x/self.size)
+        # state.append(self.flag.rect.y/self.size)
+        # state.append(self.dist)
+
         return state
 
     def step(self, action):
@@ -152,11 +173,11 @@ class Game():
         elif self.flag_check():
             self.reward = 100
         elif self.dist < self.prev_dist:
-            self.reward = 50
+            self.reward = 25
         elif self.dist == self.prev_dist:
-            self.reward = 0
+            self.reward = -1
         else:
-            self.reward = 30
+            self.reward = 10
 
 
         self.border.draw(self.screen)

@@ -57,7 +57,6 @@ class Button(pygame.Surface):
         center=(self.get_width() /2, 
                 self.get_height()/2))
         
-        print(self.x, self.y)
         self.button_rect = self.get_rect(center=(self.x, self.y))
     
     def draw_button(self, screen):

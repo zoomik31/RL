@@ -133,7 +133,7 @@ if __name__ == "__main__":
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
     env = Game(screen, maps)
-    agent = DQL(num_layers=12)
+    agent = DQL(num_layers=16)#34
     env.generate_button()
     agent.rollback()
 
@@ -155,7 +155,7 @@ if __name__ == "__main__":
                 env.car.restart()
                 # agent.draw_plot()
 
-            if env.train_step == 3500:
+            if env.train_step == 4000:
                 EPS = 0
             
             env.train_step += 1
