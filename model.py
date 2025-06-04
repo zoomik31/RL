@@ -15,10 +15,11 @@ class DQL(nn.Module):
 
         super().__init__()
         # Слои
-        self.inp = nn.Linear(num_layers, 128)
-        self.hidden1 = nn.Linear(128, 128)
-        self.hidden2 = nn.Linear(128, 128)
-        self.out = nn.Linear(128, 5)
+        self.inp = nn.Linear(num_layers, 96)
+        self.hidden1 = nn.Linear(96, 96)
+        self.dropout = nn.Dropout(0.3)
+        self.hidden2 = nn.Linear(96, 96)
+        self.out = nn.Linear(96, 5)
 
         # Память
         self.memory_states = []
@@ -33,13 +34,14 @@ class DQL(nn.Module):
 
         #Параметры
         self.optimizer = optim.Adam(self.parameters(), lr=LearningRate)
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.SmoothL1Loss()
         self.activation = nn.LeakyReLU()
     
     #Вывод
     def forward(self, x):
         x = self.activation(self.inp(x))
-        x = self.activation(self.hidden1(x))
+        x = self.hidden1(x)
+        x = self.dropout(x)
         x = self.activation(self.hidden2(x))
         x = self.activation(self.out(x))
         return x
@@ -112,6 +114,8 @@ class DQL(nn.Module):
         self.loses = []
         self.epoch = []
 
+        EPS = 0.4
+
         plt.close('all')
     
     def game(self):
@@ -128,12 +132,12 @@ if __name__ == "__main__":
     pygame.init()
     maps = {"map 1": ['E:\VS_project\souless\map_1.xlsx', (420, 395)], 
             "map 2": ['E:\VS_project\souless\map_2.xlsx', (420, 455)],
-            "map 3": ['E:\VS_project\souless\map_4.xlsx', (420, 515)]}
+            "map 3": ['E:\VS_project\souless\map_3.xlsx', (420, 515)]}
     screen = pygame.display.set_mode((WIDTH_SCREEN, HEIGHT_SCREEN))
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
     env = Game(screen, maps)
-    agent = DQL(num_layers=16)#34
+    agent = DQL(num_layers=34)#34 13
     env.generate_button()
     agent.rollback()
 
@@ -148,14 +152,18 @@ if __name__ == "__main__":
             env.save_button.draw_button(screen)
             agent.game()
             
-
-            if env.train_step % 200 == 0:
+            if env.train_step % 10 == 0:
                 print(env.train_step)
                 agent.train()
+                # env.car.restart()
+                # agent.draw_plot()
+            if env.train_step % 200 == 0:
+                print(env.train_step)
+                # agent.train()
                 env.car.restart()
                 # agent.draw_plot()
 
-            if env.train_step == 4000:
+            if env.train_step == 20000:
                 EPS = 0
             
             env.train_step += 1

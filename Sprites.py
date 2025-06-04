@@ -79,7 +79,7 @@ class SaveModelButton(Button):
         super().__init__(x, y, text)
     
     def save_model(self, model):
-        torch.save(model.state_dict(), 'model.pth')
+        torch.save(model, 'model.pth')
         
         
 class Car(pygame.sprite.Sprite):

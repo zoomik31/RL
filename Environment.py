@@ -100,53 +100,54 @@ class Game():
 
         state = []
 
-        self.car.go_right()
-        if self.barriers_check():
-            self.block_right = True
-        else: 
-            self.car.go_back()
-            self.block_right = False
+        # self.car.go_right()
+        # if self.barriers_check():
+        #     self.block_right = True
+        # else: 
+        #     self.car.go_back()
+        #     self.block_right = False
         
-        self.car.go_left()
-        if self.barriers_check():
-            self.block_left = True
-        else: 
-            self.car.go_back()
-            self.block_left = False
+        # self.car.go_left()
+        # if self.barriers_check():
+        #     self.block_left = True
+        # else: 
+        #     self.car.go_back()
+        #     self.block_left = False
         
-        self.car.go_down()
-        if self.barriers_check():
-            self.block_down = True
-        else: 
-            self.car.go_back()
-            self.block_down = False
+        # self.car.go_down()
+        # if self.barriers_check():
+        #     self.block_down = True
+        # else: 
+        #     self.car.go_back()
+        #     self.block_down = False
         
-        self.car.go_up()
-        if self.barriers_check():
-            self.block_up = True
-        else: 
-            self.car.go_back()
-            self.block_up = False
+        # self.car.go_up()
+        # if self.barriers_check():
+        #     self.block_up = True
+        # else: 
+        #     self.car.go_back()
+        #     self.block_up = False
         
-        state = [int(self.car.rect.x < self.flag.rect.x), int(self.car.rect.y < self.flag.rect.y),
-                    int(self.car.rect.x > self.flag.rect.x), int(self.car.rect.y > self.flag.rect.y),
-                    int(self.block_up), int(self.block_right),int(self.block_down),int(self.block_left),
-                    int(self.car.direction == "up"), int(self.car.direction == "right"), int(self.car.direction == "down"), int(self.car.direction == "left")
-        ]
+        # state = [int(self.car.rect.x < self.flag.rect.x), int(self.car.rect.y < self.flag.rect.y),
+        #             int(self.car.rect.x > self.flag.rect.x), int(self.car.rect.y > self.flag.rect.y),
+        #             int(self.block_up), int(self.block_right),int(self.block_down),int(self.block_left),
+        #             int(self.car.direction == "up"), int(self.car.direction == "right"), int(self.car.direction == "down"), int(self.car.direction == "left")
+        # ]
+        # state.append(self.dist)
 
-        # for y in range(int(self.car.rect.y/self.size)-2, (int(self.car.rect.y/self.size)+3)):
-        #     for x in range(int(self.car.rect.x/self.size)-2, int(self.car.rect.x/self.size)+3):
-        #         state.append(self.all_map[y][x])
+        for y in range(int(self.car.rect.y/self.size)-2, (int(self.car.rect.y/self.size)+3)):
+            for x in range(int(self.car.rect.x/self.size)-2, int(self.car.rect.x/self.size)+3):
+                state.append(self.all_map[y][x])
         
         state.append(int(self.car.direction == "up"))
         state.append(int(self.car.direction == "right"))
         state.append(int(self.car.direction == "down"))
         state.append(int(self.car.direction == "left"))
-        # state.append(self.car.rect.x/self.size)
-        # state.append(self.car.rect.y/self.size)
-        # state.append(self.flag.rect.x/self.size)
-        # state.append(self.flag.rect.y/self.size)
-        # state.append(self.dist)
+        state.append(self.car.rect.x)
+        state.append(self.car.rect.y)
+        state.append(self.flag.rect.x)
+        state.append(self.flag.rect.y)
+        state.append(self.dist)
 
         return state
 
@@ -171,14 +172,29 @@ class Game():
         if self.barriers_check():
             self.reward = -100
         elif self.flag_check():
-            self.reward = 100
-        elif self.dist < self.prev_dist:
-            self.reward = 25
-        elif self.dist == self.prev_dist:
-            self.reward = -1
-        else:
-            self.reward = 10
+            self.reward = 150
+        # elif self.dist < self.prev_dist:
+        #     if self.dist < 300:
+        #         self.reward = 30
+        #     elif self.dist < 100:
+        #         self.reward = 50
+        #     else:
+        #         self.reward = 10
+        # elif self.dist == self.prev_dist:
+        #     self.reward = 0
+        # else:
+        #     if self.dist < 300:
+        #         self.reward = 10
+        #     elif self.dist < 100:
+        #         self.reward = 30
+        #     else:
+        #         self.reward = 5
 
+        elif self.dist < self.prev_dist: 
+            self.reward = 30
+        else:
+            self.reward = 0 
+        
 
         self.border.draw(self.screen)
         self.forest.draw(self.screen)
