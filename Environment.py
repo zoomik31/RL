@@ -43,16 +43,16 @@ class Game():
         for y in range(len(self.map)):
             layer = []
             for x in range(len(self.map[0])):
-                if self.map[y][x] == 1:
+                if self.map[x][y] == 1:
                     brd = Border(x*self.size, y*self.size, self.size)
                     self.border.add(brd)
                     layer.append(1)
                 
-                elif self.map[y][x] == 2:
+                elif self.map[x][y] == 2:
                     self.flag = Flag(x*self.size, y*self.size, self.size)
                     layer.append(2)
 
-                elif self.map[y][x] == 3:
+                elif self.map[x][y] == 3:
                     tree = Tree(x*self.size, y*self.size, self.size)
                     self.forest.add(tree)
                     layer.append(3)
@@ -63,7 +63,7 @@ class Game():
                     layer.append(0)
 
             self.all_map.append(layer)
-        self.car = Car(9 * self.size, 35 * self.size, self.size)
+        self.car = Car(35 * self.size, 9 * self.size, self.size)
         self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
     
     def generate_button(self):
@@ -137,7 +137,7 @@ class Game():
 
         for y in range(int(self.car.rect.y/self.size)-2, (int(self.car.rect.y/self.size)+3)):
             for x in range(int(self.car.rect.x/self.size)-2, int(self.car.rect.x/self.size)+3):
-                state.append(self.all_map[y][x])
+                state.append(self.all_map[x][y])
         
         state.append(int(self.car.direction == "up"))
         state.append(int(self.car.direction == "right"))
@@ -240,7 +240,7 @@ if __name__ == "__main__":
     pygame.init()
     maps = {"map 1": ['E:\VS_project\souless\map_1.xlsx', (420, 395)], 
             "map 2": ['E:\VS_project\souless\map_2.xlsx', (420, 455)],
-            "map 3": ['E:\VS_project\souless\map_4.xlsx', (420, 515)]}
+            "map 3": ['E:\VS_project\souless\map_3.xlsx', (420, 515)]}
     screen = pygame.display.set_mode((WIDTH_SCREEN, HEIGHT_SCREEN))
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()

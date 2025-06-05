@@ -5,32 +5,35 @@ import torch.nn.init as init
 import torch.optim as optim
 import pygame
 from Environment import *
+from random_train import *
 import random
 import matplotlib.pyplot as plt
 
-EPS = 0.4
+EPS = 0.25
 
 class DQL(nn.Module):
     def __init__(self, LearningRate=0.01, num_layers=9):
 
         super().__init__()
         # Слои
-        self.inp = nn.Linear(num_layers, 96)
-        self.hidden1 = nn.Linear(96, 96)
+        self.inp = nn.Linear(num_layers, 32)
+        self.hidden1 = nn.Linear(32, 32)
         self.dropout = nn.Dropout(0.3)
-        self.hidden2 = nn.Linear(96, 96)
-        self.out = nn.Linear(96, 5)
-
+        self.hidden2 = nn.Linear(32, 32)
+        self.out = nn.Linear(32, 5)
+  
         # Память
         self.memory_states = []
         self.memory_actions = []
         self.memory_rewards = []
         self.memory_next_states = []
+        self.memory_dones = []
         self.memory_len = 0
         self.epochs_num = 1
         self.loses = []
         self.epoch = []
         self.rewards_per_epoch = []
+        self.min_lose = -1
 
         #Параметры
         self.optimizer = optim.Adam(self.parameters(), lr=LearningRate)
@@ -40,6 +43,7 @@ class DQL(nn.Module):
     #Вывод
     def forward(self, x):
         x = self.activation(self.inp(x))
+        x = self.dropout(x)
         x = self.hidden1(x)
         x = self.dropout(x)
         x = self.activation(self.hidden2(x))
@@ -47,11 +51,12 @@ class DQL(nn.Module):
         return x
     
     #Запоминание всех объектов для обучения
-    def remember(self, state, action, reward, next_state):
+    def remember(self, state, action, reward, next_state, done):
         self.memory_states.append(state)
         self.memory_actions.append(action)
         self.memory_rewards.append(reward)
         self.memory_next_states.append(next_state)
+        self.memory_dones.append(done)
         self.memory_len += 1
 
     # метод для получения тензоров
@@ -70,22 +75,26 @@ class DQL(nn.Module):
         next_states = t.FloatTensor(self.memory_next_states).cpu()
         self.memory_next_states.clear()
 
+        dones = t.FloatTensor(self.memory_dones).cpu()
+        self.memory_dones.clear()
+
         self.memory_len = 0
-        return (states, actions, rewards, next_states)
+        return (states, actions, rewards, next_states, dones)
     
 
     def train(self):
         if (self.memory_len == 0):
             return
         memory_len = self.memory_len
-        states, actions, rewards, next_states = self.samplebatch()
+        states, actions, rewards, next_states, dones = self.samplebatch()
        
         NeuroNowAnswer = self.forward(states)
         NeuroNextAnswer = self.forward(next_states)
         predicted_now_value = NeuroNowAnswer[range(memory_len), actions]
         predicted_future_value = t.max(NeuroNextAnswer, dim=1)[0]
-        predict_target = rewards + 0.8 * predicted_future_value
+        predict_target = rewards + 0.8 * predicted_future_value * (1-dones)
         loss = self.criterion(predict_target, predicted_now_value)
+        
         self.loses.append(loss.cpu().item())
         self.rewards_per_epoch.append(t.sum(rewards.cpu()).item())
         self.optimizer.zero_grad()
@@ -105,9 +114,7 @@ class DQL(nn.Module):
         plt.pause(0.001)
     
     def rollback(self):
-        env.forest.empty()
-        env.empty_space.empty()
-        env.border.empty()
+        env.del_state()
 
         env.train_step = 1
         self.epochs_num = 1
@@ -118,6 +125,11 @@ class DQL(nn.Module):
 
         plt.close('all')
     
+    def checkpoint(self):
+        if self.loses[-1] < self.min_lose or self.min_lose == -1:
+            self.min_lose = self.loses[-1]
+            torch.save(self, r'E:\VS_project\souless\model_checkpoint.pt') 
+
     def game(self):
         state = env.get_state()
         if (random.random() < EPS):
@@ -125,18 +137,19 @@ class DQL(nn.Module):
         else:
             answer = self.forward((torch.FloatTensor(state)))
             action = torch.argmax(answer).item()
-        next_state, reward = env.step(action)
-        self.remember(state, action, reward, next_state)
+        next_state, reward, done = env.step(action)
+        self.remember(state, action, reward, next_state, int(done))
+        if done:
+            env.del_state()
+            env.generate_map()
 
 if __name__ == "__main__":
     pygame.init()
-    maps = {"map 1": ['E:\VS_project\souless\map_1.xlsx', (420, 395)], 
-            "map 2": ['E:\VS_project\souless\map_2.xlsx', (420, 455)],
-            "map 3": ['E:\VS_project\souless\map_3.xlsx', (420, 515)]}
+    maps = "E:\VS_project\souless\maps.xlsx"
     screen = pygame.display.set_mode((WIDTH_SCREEN, HEIGHT_SCREEN))
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
-    env = Game(screen, maps)
+    env = RandomGame(screen, maps)
     agent = DQL(num_layers=34)#34 13
     env.generate_button()
     agent.rollback()
@@ -148,29 +161,25 @@ if __name__ == "__main__":
         env.button_tracking(agent)
         
         if env.on_mission:
-            env.back_button.draw_button(screen)
             env.save_button.draw_button(screen)
             agent.game()
             
-            if env.train_step % 10 == 0:
+            if env.train_step % 20 == 0:
                 print(env.train_step)
                 agent.train()
+                agent.checkpoint()
                 # env.car.restart()
                 # agent.draw_plot()
-            if env.train_step % 200 == 0:
+            if env.train_step % 500 == 0:
                 print(env.train_step)
-                # agent.train()
-                env.car.restart()
-                # agent.draw_plot()
-
-            if env.train_step == 20000:
                 EPS = 0
+                # agent.train()
+                # env.car.restart()
+                # agent.draw_plot()
             
             env.train_step += 1
         else:
             if env.train_step > 1:
                 agent.rollback()
-            env.map_button_1.draw_button(screen)
             env.map_button_2.draw_button(screen)
-            env.map_button_3.draw_button(screen)
             pygame.display.flip()

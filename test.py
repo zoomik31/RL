@@ -20,10 +20,10 @@ if __name__ == "__main__":
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
     env = Game(screen, maps)
-    # model = ModelClass()
-    # model.load_state_dict(torch.load('souless\model.pth'))
-    model = torch.load('souless\model.pth')
-    model.eval()
+    train_func = DQL()
+    # model.load_state_dict(torch.load('model.pt'))
+    model = torch.load('model.pt', weights_only=False) # model_checkpoint
+    # model.eval()
     env.generate_button()
 
     while True:
@@ -43,6 +43,8 @@ if __name__ == "__main__":
 
             env.train_step += 1
         else:
+            if env.train_step > 1:
+                train_func.rollback()
             env.map_button_1.draw_button(screen)
             env.map_button_2.draw_button(screen)
             env.map_button_3.draw_button(screen)

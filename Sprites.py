@@ -79,7 +79,7 @@ class SaveModelButton(Button):
         super().__init__(x, y, text)
     
     def save_model(self, model):
-        torch.save(model, 'model.pth')
+        torch.save(model, r'E:\VS_project\souless\model.pt')
         
         
 class Car(pygame.sprite.Sprite):
@@ -105,20 +105,32 @@ class Car(pygame.sprite.Sprite):
         pass
 
     def go_right(self):
-        self.direction = "right"
-        self.rect.x += (self.size)
+        if self.direction == 'left':
+            pass
+        else:
+            self.direction = "right"
+            self.rect.x += (self.size)
 
     def go_left(self):
-        self.direction = "left"
-        self.rect.x -= (self.size)
+        if self.direction == 'right':
+            pass
+        else:
+            self.direction = "left"
+            self.rect.x -= (self.size)
         
     def go_down(self):
-        self.direction = "down"
-        self.rect.y += (self.size)
+        if self.direction == 'up':
+            pass
+        else:
+            self.direction = "down"
+            self.rect.y += (self.size)
 
     def go_up(self):
-        self.direction = "up"
-        self.rect.y -= (self.size)
+        if self.direction == 'down':
+            pass
+        else:
+            self.direction = "up"
+            self.rect.y -= (self.size)
 
     def go_back(self):
         if self.direction == 'right':
