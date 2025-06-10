@@ -3,7 +3,7 @@ import math
 import random
 import torch
 import pandas as pd
-
+import psycopg2
 from Sprites import *
 
 BLUE = (0, 0, 255)
@@ -23,8 +23,7 @@ HEIGHT_SCREEN = 950
 EPS = 0.3
 
 class Game():
-    def __init__(self, screen, maps):
-        self.maps = maps
+    def __init__(self, screen):
         self.fps = 20
 
         self.empty_space = pygame.sprite.Group()
@@ -40,34 +39,35 @@ class Game():
         self.on_mission = False
     
     def generate_map(self, map):
-        self.count_add_reward = []
-
-        self.map = pd.read_excel(map, header=None)
-        for y in range(len(self.map)):
+        car_created = False
+        for row in map:
             layer = []
-            for x in range(len(self.map[0])):
-                if self.map[y][x] == 1:
-                    brd = Border(x*self.size, y*self.size, self.size)
-                    self.border.add(brd)
-                    layer.append(1)
-                
-                elif self.map[y][x] == 2:
-                    self.flag = Flag(x*self.size, y*self.size, self.size)
-                    layer.append(2)
+            if row[0] == 1:
+                brd = Border(row[2]*self.size, row[1]*self.size, self.size)
+                self.border.add(brd)
+                layer.append(1)
+            
+            elif row[0] == 2:
+                self.flag = Flag(row[2]*self.size, row[1]*self.size, self.size)
+                layer.append(2)
 
-                elif self.map[y][x] == 3:
-                    tree = Tree(x*self.size, y*self.size, self.size)
-                    self.forest.add(tree)
-                    layer.append(3)
+            elif row[0] == 3:
+                tree = Tree(row[2]*self.size, row[1]*self.size, self.size)
+                self.forest.add(tree)
+                layer.append(3)
 
-                else:
-                    self.emp = Empty(x*self.size, y*self.size, self.size)
-                    self.empty_space.add(self.emp)
-                    layer.append(0)
+            elif row[0] == 5:
+                car_created = True
+                self.car = Car(row[2]*self.size, row[1]*self.size, self.size)
+                layer.append(0)
+            else:
+                self.emp = Empty(row[2]*self.size, row[1]*self.size, self.size)
+                self.empty_space.add(self.emp)
+                layer.append(0)
 
-            self.all_map.append(layer)
-        
-        self.car = Car(screen, 9 * self.size, 35 * self.size, self.size)
+        self.all_map.append(layer)
+        if car_created == False:
+            self.car = Car(9 * self.size, 35 * self.size, self.size)
         # self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
             
     def generate_button(self):

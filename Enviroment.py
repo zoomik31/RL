@@ -1,6 +1,7 @@
 import pygame
 import math
 import pandas as pd
+import psycopg2
 from Sprites import *
 
 BLUE = (0, 0, 255)
@@ -18,8 +19,7 @@ HEIGHT_SCREEN = 950
 FPS = 60
 
 class Game():
-    def __init__(self, screen, maps):
-        self.maps = maps
+    def __init__(self, screen):
         self.empty_space = pygame.sprite.Group()
         self.border = pygame.sprite.Group()
         self.forest = pygame.sprite.Group()
@@ -30,40 +30,45 @@ class Game():
         self.num_agents = 2
 
     def generate_map(self, map):
-        self.map = pd.read_excel(map, header=None)
-        for y in range(len(self.map)):
-            for x in range(len(self.map[0])):
-                if self.map[y][x] == 1:
-                    brd = Border(x*self.size, y*self.size, self.size)
-                    self.border.add(brd)
-                elif self.map[y][x] == 2:
-                    self.flag = Flag(x*self.size, y*self.size, self.size)
-                elif self.map[y][x] == 3:
-                    tree = Tree(x*self.size, y*self.size, self.size)
-                    self.forest.add(tree)
-                else:
-                    emp = Empty(x*self.size, y*self.size, self.size)
-                    self.empty_space.add(emp)
+        car_created = 0
+        for row in map:
+            if row[0] == 1:
+                brd = Border(row[2]*self.size, row[1]*self.size, self.size)
+                self.border.add(brd)
+            
+            elif row[0] == 2:
+                self.flag = Flag(row[2]*self.size, row[1]*self.size, self.size)
+
+            elif row[0] == 3:
+                tree = Tree(row[2]*self.size, row[1]*self.size, self.size)
+                self.forest.add(tree)
+
+            elif row[0] == 5:
+                car_created +=1
+                self.car = Car(row[2]*self.size, row[1]*self.size, self.size, RED)
+            else:
+                self.emp = Empty(row[2]*self.size, row[1]*self.size, self.size)
+                self.empty_space.add(self.emp)
+
         # Два агента разного цвета
-        car = Car(9*self.size, 35*self.size, self.size, RED)
-        self.cars.add(car)
-        car = Car(11*self.size, 35*self.size, self.size, BLUE)
-        self.cars.add(car)
+        if car_created == 0:
+            car = Car(9*self.size, 35*self.size, self.size, RED)
+            self.cars.add(car)
+            car = Car(11*self.size, 35*self.size, self.size, BLUE)
+            self.cars.add(car)
+        if car_created == 1:
+            car = Car(11*self.size, 35*self.size, self.size, BLUE)
+            self.cars.add(car)
 
         self.dists = [self.calculate_distance(car) for car in self.cars]
         self.prev_dists = self.dists.copy()
+
+        self.generate_button()
 
     def calculate_distance(self, car):
         return math.sqrt((car.rect.x-self.flag.rect.x)**2 + (car.rect.y-self.flag.rect.y)**2)
 
     def generate_button(self):
-        self.buttons = [
-            MapButton(420, 395, "Map 1", self.maps["map 1"][0]),
-            MapButton(420, 455, "Map 2", self.maps["map 2"][0]),
-            MapButton(420, 515, "Map 3", self.maps["map 3"][0])
-        ]
-        for btn in self.buttons: btn.create_button()
-
         self.back_button = BackButton(200, 900, "choise map")
         self.save_button = SaveModelButton(600, 900, "save model")
 
@@ -188,9 +193,9 @@ class Game():
         car1 = self.cars.sprites()[1]
         dist = math.sqrt((car0.rect.x - car1.rect.x) ** 2 + (car0.rect.y - car1.rect.y) ** 2)
         if dist < 2 * self.size:
-            rewards = [r + 30 for r in rewards]
+            rewards = [r + 25 for r in rewards]
         else:
-            rewards = [r - 10 for r in rewards]
+            rewards = [r - 15 for r in rewards]
         # Штраф если второй агент обгоняет первого (по расстоянию до флага)
         dist0 = self.calculate_distance(car0)
         dist1 = self.calculate_distance(car1)

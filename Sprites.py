@@ -37,12 +37,13 @@ class Tree(Cell):
         super().__init__(x, y, size, colour)
 
 class Button(pygame.Surface):
-    def __init__(self, x, y, text):
+    def __init__(self, x, y, text, size):
         pygame.Surface.__init__(self, (150, 50))
         self.colour = WHITE
         self.x = x
         self.y = y
-        self.font = pygame.font.Font(None, 24)
+        self.size = size
+        self.font = pygame.font.Font(None, size)
         self.text_colour = BLACK
         self.font_antialias = True
         self.text = text
@@ -58,17 +59,24 @@ class Button(pygame.Surface):
         screen.blit(self, (self.button_rect.x, self.button_rect.y))
 
 class MapButton(Button):
-    def __init__(self, x, y, text, map):
-        super().__init__(x, y, text)
-        self.map = map
+    def __init__(self, x, y, text, size=24):
+        super().__init__(x, y, text, size)
     
 class BackButton(Button):
-    def __init__(self, x, y, text):
-        super().__init__(x, y, text)
+    def __init__(self, x, y, text, size=24):
+        super().__init__(x, y, text, size)
+
+class NumAgent(Button):
+    def __init__(self, x, y, text, size=24):
+        super().__init__(x, y, text, size)
+    
+class MapType(Button):
+    def __init__(self, x, y, text, size=24):
+        super().__init__(x, y, text, size)
 
 class SaveModelButton(Button):
-    def __init__(self, x, y, text):
-        super().__init__(x, y, text)
+    def __init__(self, x, y, text, size=24):
+        super().__init__(x, y, text, size)
     
     def save_model(self, model):
         torch.save(model.state_dict(), 'model.pth')

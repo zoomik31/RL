@@ -85,7 +85,7 @@ if __name__ == "__main__":
     maps = {
         "map 1": ['E:\VS_project\souless\map_1.xlsx', (420, 395)],
         "map 2": ['E:\VS_project\souless\map_2.xlsx', (420, 455)],
-        "map 3": ['E:\VS_project\souless\map_4.xlsx', (420, 515)]
+        "map 3": ['E:\VS_project\souless\map_3.xlsx', (420, 515)]
     }
     env = Game(screen, maps)
     env.generate_button()
