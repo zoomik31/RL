@@ -22,7 +22,7 @@ if __name__ == "__main__":
     env = Game(screen, maps)
     train_func = DQL()
     # model.load_state_dict(torch.load('model.pt'))
-    model = torch.load('model.pt', weights_only=False) # model_checkpoint
+    model = torch.load('model.pt', weights_only = False) # model_checkpoint
     # model.eval()
     env.generate_button()
 
