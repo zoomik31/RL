@@ -23,7 +23,13 @@ class Game():
         self.empty_space = pygame.sprite.Group()
         self.border = pygame.sprite.Group()
         self.forest = pygame.sprite.Group()
+        self.roads = pygame.sprite.Group()
         self.cars = pygame.sprite.Group()
+        self.start_cells = pygame.sprite.Group()
+        self.snow_cells = pygame.sprite.Group()
+        self.snowdrifts = pygame.sprite.Group()
+        self.divinglines = pygame.sprite.Group()
+        self.puddles = pygame.sprite.Group()
         self.size = 20
         self.screen = screen
         self.on_mission = False
@@ -43,22 +49,56 @@ class Game():
                 tree = Tree(row[2]*self.size, row[1]*self.size, self.size)
                 self.forest.add(tree)
 
+            elif row[0] == 4:
+                road = Road(row[2]*self.size, row[1]*self.size, self.size)
+                self.roads.add(road)
+
             elif row[0] == 5:
                 car_created +=1
-                self.car = Car(row[2]*self.size, row[1]*self.size, self.size, RED)
+                car = Car(row[2]*self.size, row[1]*self.size, self.size, RED)
+                self.cars.add(car)
+                start_cell = Start(row[2]*self.size, row[1]*self.size, self.size)
+                self.start_cells.add(start_cell)
+
+            elif row[0] == 6:
+                snow = Snow(row[2]*self.size, row[1]*self.size, self.size)
+                self.snow_cells.add(snow)
+            
+            elif row[0] == 7:
+                snowdrift = SnowDrift(row[2]*self.size, row[1]*self.size, self.size)
+                self.snowdrifts.add(snowdrift)
+            
+            elif row[0] == 8:
+                div_line = DivingLine(row[2]*self.size, row[1]*self.size, self.size)
+                self.divinglines.add(div_line)
+            
+            elif row[0] == 9:
+                puddle = Puddle(row[2]*self.size, row[1]*self.size, self.size)
+                self.puddles.add(puddle)
             else:
                 self.emp = Empty(row[2]*self.size, row[1]*self.size, self.size)
                 self.empty_space.add(self.emp)
 
         # Два агента разного цвета
         if car_created == 0:
-            car = Car(9*self.size, 35*self.size, self.size, RED)
+            print('hi')
+            x, y = 9, 35
+            car = Car(x*self.size, y*self.size, self.size, RED)
             self.cars.add(car)
-            car = Car(11*self.size, 35*self.size, self.size, BLUE)
+            car = Car((x+2)*self.size, y*self.size, self.size, BLUE)
             self.cars.add(car)
+
+            start_cell = Start(x*self.size, y*self.size, self.size)
+            self.start_cells.add(start_cell)
+            start_cell = Start((x+2)*self.size, y*self.size, self.size)
+            self.start_cells.add(start_cell)
+
         if car_created == 1:
-            car = Car(11*self.size, 35*self.size, self.size, BLUE)
+            car = Car(car.rect.x + (2 *self.size), car.rect.y, self.size, BLUE)
             self.cars.add(car)
+
+            start_cell = Start(car.rect.x + (2 *self.size), car.rect.y, self.size)
+            self.start_cells.add(start_cell)
 
         self.dists = [self.calculate_distance(car) for car in self.cars]
         self.prev_dists = self.dists.copy()
@@ -210,7 +250,9 @@ class Game():
         self.screen.fill((155, 255, 155))
         self.border.draw(self.screen)
         self.forest.draw(self.screen)
+        self.roads.draw(self.screen)
         self.empty_space.draw(self.screen)
+        self.start_cells.draw(self.screen)
         self.screen.blit(self.flag.image, self.flag.rect)
         for car in self.cars:
             self.screen.blit(car.image, car.rect)

@@ -1,13 +1,17 @@
 import pygame
 import torch
 
-BLUE = (0, 0, 255)
+BLUE = (0, 0, 0)
+LAPIS = (0, 127, 255)
+SAPHIER = (8, 37, 103)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
-GREY = (123, 241, 123)
+GREY = (192, 192, 192)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
+LIGHT_GREEN = (204, 255, 153)
+PINK = (248, 24, 148)
 
 class Cell(pygame.sprite.Sprite):
     def __init__(self, x, y, size, colour=RED):
@@ -29,11 +33,35 @@ class Flag(Cell):
         super().__init__(x, y, size, colour)
 
 class Empty(Cell):
-    def __init__(self, x, y, size, colour=WHITE):
+    def __init__(self, x, y, size, colour=LIGHT_GREEN):
         super().__init__(x, y, size, colour)
 
 class Tree(Cell):
     def __init__(self, x, y, size, colour=GREEN):
+        super().__init__(x, y, size, colour)
+
+class Road(Cell):
+    def __init__(self, x, y, size, colour=GREY):
+        super().__init__(x, y, size, colour)
+
+class Start(Cell):
+    def __init__(self, x, y, size, colour=PINK):
+        super().__init__(x, y, size, colour)
+
+class Snow(Cell):
+    def __init__(self, x, y, size, colour=LAPIS):
+        super().__init__(x, y, size, colour)
+
+class SnowDrift(Cell):
+    def __init__(self, x, y, size, colour=SAPHIER):
+        super().__init__(x, y, size, colour)
+
+class DivingLine(Cell):
+    def __init__(self, x, y, size, colour=WHITE):
+        super().__init__(x, y, size, colour)
+
+class Puddle(Cell):
+    def __init__(self, x, y, size, colour=BLUE):
         super().__init__(x, y, size, colour)
 
 class Button(pygame.Surface):

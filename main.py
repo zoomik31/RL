@@ -106,8 +106,8 @@ class MainGame():
 
         # --- Ротация ролей и перезапуск эпизода ---
         if any(r >= 100 for r in rewards) or self.steps >= self.max_steps:
-            env.swap_start_positions()
-            for car in env.cars:
+            self.env.swap_start_positions()
+            for car in self.env.cars:
                 car.restart()
             self.steps = 0
 
