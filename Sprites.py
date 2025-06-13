@@ -1,7 +1,7 @@
 import pygame
 import torch
 
-BLUE = (0, 0, 0)
+BLUE = (0, 0, 255)
 LAPIS = (0, 127, 255)
 SAPHIER = (8, 37, 103)
 YELLOW = (255, 255, 0)

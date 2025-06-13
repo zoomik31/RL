@@ -4,7 +4,7 @@ import pandas as pd
 import psycopg2
 from Sprites import *
 
-BLUE = (0, 0, 255)
+ORANGE = (255,140,0)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 GREY = (123, 241, 123)
@@ -85,7 +85,7 @@ class Game():
             x, y = 9, 35
             car = Car(x*self.size, y*self.size, self.size, RED)
             self.cars.add(car)
-            car = Car((x+2)*self.size, y*self.size, self.size, BLUE)
+            car = Car((x+2)*self.size, y*self.size, self.size, ORANGE)
             self.cars.add(car)
 
             start_cell = Start(x*self.size, y*self.size, self.size)
@@ -94,10 +94,10 @@ class Game():
             self.start_cells.add(start_cell)
 
         if car_created == 1:
-            car = Car(car.rect.x + (2 *self.size), car.rect.y, self.size, BLUE)
+            car = Car(car.rect.x, car.rect.y - self.size, self.size, ORANGE)
             self.cars.add(car)
 
-            start_cell = Start(car.rect.x + (2 *self.size), car.rect.y, self.size)
+            start_cell = Start(car.rect.x, car.rect.y - self.size, self.size)
             self.start_cells.add(start_cell)
 
         self.dists = [self.calculate_distance(car) for car in self.cars]
@@ -252,6 +252,10 @@ class Game():
         self.forest.draw(self.screen)
         self.roads.draw(self.screen)
         self.empty_space.draw(self.screen)
+        self.snow_cells.draw(self.screen)
+        self.snowdrifts.draw(self.screen)
+        self.divinglines.draw(self.screen)
+        self.puddles.draw(self.screen)
         self.start_cells.draw(self.screen)
         self.screen.blit(self.flag.image, self.flag.rect)
         for car in self.cars:
@@ -269,6 +273,6 @@ class Game():
                     if btn.button_rect.collidepoint(event.pos) and not self.on_mission:
                         self.on_mission = True
                         self.generate_map(btn.map)
-                
+                 
                 if self.back_button.button_rect.collidepoint(event.pos) and self.on_mission:
                     self.on_mission = False

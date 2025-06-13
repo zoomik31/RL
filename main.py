@@ -3,6 +3,7 @@ from Environment import Game as OneAgentGame
 from Enviroment import Game as MultyAgentEnvGame
 import psycopg2
 from multy_model import *
+from dql_model import *
 import time
 
 BLUE = (0, 0, 255)
@@ -84,8 +85,8 @@ class MainGame():
 
     def multyagent_learning(self):
         if self.agent is None:
-                state_dim = len(self.env.get_joint_state())
-                self.agent = JointDQL(state_dim=state_dim, action_dim=4, num_agents=2)
+            state_dim = len(self.env.get_joint_state())
+            self.agent = JointDQL(state_dim=state_dim, action_dim=4, num_agents=2)
 
         joint_state = self.env.get_joint_state()
         actions = self.agent.act(joint_state)
@@ -110,6 +111,19 @@ class MainGame():
             for car in self.env.cars:
                 car.restart()
             self.steps = 0
+
+    def dql_learning(self):
+        if self.agent is None:
+            self.agent = DQL(self.env, num_layers=13)
+        self.env.save_button.draw_button(screen)
+        self.env.back_button.draw_button(screen)
+        self.agent.game()
+            
+        if self.env.train_step % 20 == 0:
+            print(self.env.train_step)
+            self.agent.train()
+        
+        self.env.train_step += 1
 
     def button_tracking(self):
         for event in pygame.event.get():
@@ -141,12 +155,11 @@ class MainGame():
                 elif self.chosed_type_map == True:
                     for map in self.map_btns:
                         if map.button_rect.collidepoint(event.pos):
-                            print('h')
                             self.on_mission = True
                             self.cursor.execute(f"SELECT map, x, y from {map.text}")
                             record = self.cursor.fetchall()
                             self.env.generate_map(record)
-                
+            
 
 
                 
@@ -190,4 +203,4 @@ if __name__ == "__main__":
             main_menu.multyagent_learning()
         
         elif main_menu.on_mission and main_menu.num_agent == 1:
-            main_menu.multyagent_learning()
+            main_menu.dql_learning()
