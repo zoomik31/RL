@@ -117,8 +117,8 @@ class Game():
     
     def barriers_check(self, idx):
         car = self.cars.sprites()[idx]
-        # Проверка на лес или бордюр
-        if pygame.sprite.spritecollideany(car, self.forest) or pygame.sprite.spritecollideany(car, self.border):
+        # Проверка на столкновение
+        if pygame.sprite.spritecollideany(self.car, self.forest) or pygame.sprite.spritecollideany(self.car, self.border) or pygame.sprite.spritecollideany(self.car, self.snowdrifts) or pygame.sprite.spritecollideany(self.car, self.puddles):
             return True
         # Проверка столкновения с другим агентом
         for i, other in enumerate(self.cars):

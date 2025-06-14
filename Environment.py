@@ -83,7 +83,6 @@ class Game():
                 self.divinglines.add(div_line)
             
             elif row[0] == 9:
-                print('eewwww')
                 puddle = Puddle(row[2]*self.size, row[1]*self.size, self.size)
                 self.puddles.add(puddle)
             else:
@@ -104,8 +103,7 @@ class Game():
 
 
     def barriers_check(self):
-        if pygame.sprite.spritecollideany(self.car, self.forest) or pygame.sprite.spritecollideany(self.car, self.border):
-            self.car.go_back()
+        if pygame.sprite.spritecollideany(self.car, self.forest) or pygame.sprite.spritecollideany(self.car, self.border) or pygame.sprite.spritecollideany(self.car, self.snowdrifts) or pygame.sprite.spritecollideany(self.car, self.puddles):
             return True
 
     def flag_check(self):
