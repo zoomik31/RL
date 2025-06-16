@@ -83,11 +83,11 @@ class SaveModelButton(Button):
         
         
 class Car(pygame.sprite.Sprite):
-    def __init__(self, x=0, y=0, size=10):
+    def __init__(self, x=0, y=0, size=10, colour = RED):
         pygame.sprite.Sprite.__init__(self)
         self.car_size = (size, size)
         self.image = pygame.Surface(self.car_size)
-        self.image.fill(RED)
+        self.image.fill(colour)
         self.rect = self.image.get_rect()
         self.start_x = x
         self.start_y = y
