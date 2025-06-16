@@ -132,14 +132,21 @@ class DQL(nn.Module):
             self.min_lose = self.loses[-1]
             torch.save(self, r'E:\VS_project\souless\model_checkpoint.pt') 
 
-    def game(self):
-        state = self.env.get_state()
+    def game_main(self, model):
+        state = self.env.get_state_main()
+        answer = model.forward((torch.FloatTensor(state)))
+        action = torch.argmax(answer).item()
+        
+        env.step_main(action)
+
+    def game_side(self):
+        state = self.env.get_state_side()
         if (random.random() < EPS):
             action = random.choice(range(4))
         else:
             answer = self.forward((torch.FloatTensor(state)))
             action = torch.argmax(answer).item()
-        next_state, reward, done = self.env.step(action)
+        next_state, reward, done = self.env.step_side(action)
         self.remember(state, action, reward, next_state, int(done))
 
 if __name__ == "__main__":

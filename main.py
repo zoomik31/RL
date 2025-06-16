@@ -2,9 +2,9 @@ from Sprites import *
 from Environment import Game as OneAgentGame
 from Enviroment import Game as MultyAgentEnvGame
 import psycopg2
-from multy_model import *
-from dql_model import *
+from model import *
 import time
+import torch
 
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
@@ -30,7 +30,7 @@ class MainGame():
         self.map_created = False
         self.chosed_type_map = False
         self.on_mission = False
-        self.agent = None
+        self.agent_1 = None
         self.episode = 1
         self.steps = 0
         self.max_steps = 2500
@@ -84,33 +84,29 @@ class MainGame():
         return self.map_created
 
     def multyagent_learning(self):
-        if self.agent is None:
-            state_dim = len(self.env.get_joint_state())
-            self.agent = JointDQL(state_dim=state_dim, action_dim=4, num_agents=2)
+        if self.agent_1 is None:
+            self.agent_1 = DQL(self.env)
+            # torch.load('model.pt', weights_only = False) # model_checkpoint
+            self.agent_2 = DQL(self.env, num_layers=13)
 
-        joint_state = self.env.get_joint_state()
-        actions = self.agent.act(joint_state)
-        next_states, rewards = self.env.step(actions)
-        next_joint_state = self.env.get_joint_state()
-
-        self.agent.remember(joint_state, actions, rewards, next_joint_state)
-        self.episode += 1
-        self.steps += 1
-        self.env.run_game()
-        self.env.back_button.draw_button(screen)
-        self.env.save_button.draw_button(screen)
+        self.agent_1.game_main(torch.load('model.pt', weights_only = False))
+        self.agent_2.game_side()
         
-
-        if self.episode % 200 == 0:
-            print(self.episode)
-            self.agent.train()
-
-        # --- Ротация ролей и перезапуск эпизода ---
-        if any(r >= 100 for r in rewards) or self.steps >= self.max_steps:
-            self.env.swap_start_positions()
-            for car in self.env.cars:
-                car.restart()
-            self.steps = 0
+        self.env.save_button.draw_button(screen)
+        self.env.back_button.draw_button(screen)
+        
+        if self.env.train_step > 3500:
+            if self.env.train_step % 200 == 0:
+                self.env.car_1.restart()
+                self.env.car_2.restart()  
+            elif self.env.train_step % 200 == 0:
+                self.agent_2.train()
+                print(self.env.train_step)
+                self.env.car_1.restart()
+                self.env.car_2.restart()
+            elif self.env.train_step % 20 == 0:
+                self.agent_2.train()
+        self.env.train_step += 1
 
     def dql_learning(self):
         if self.agent is None:
