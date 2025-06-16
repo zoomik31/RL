@@ -97,13 +97,13 @@ class MainGame():
             if self.env.train_step % 200 == 0:
                 self.env.car_1.restart()
                 self.env.car_2.restart()  
-            elif self.env.train_step % 200 == 0:
-                self.agent_2.train()
-                print(self.env.train_step)
-                self.env.car_1.restart()
-                self.env.car_2.restart()
-            elif self.env.train_step % 20 == 0:
-                self.agent_2.train()
+        elif self.env.train_step % 200 == 0:
+            self.agent_2.train()
+            print(self.env.train_step)
+            self.env.car_1.restart()
+            self.env.car_2.restart()
+        elif self.env.train_step % 20 == 0:
+            self.agent_2.train()
         self.env.train_step += 1
 
         self.env.save_button.draw_button(screen)

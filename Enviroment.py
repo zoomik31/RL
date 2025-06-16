@@ -284,10 +284,8 @@ class Game():
             self.reward_side = -100
         elif self.flag_check_side():
             self.reward_side = 150
-        elif self.dist_main < self.prev_dist_side: 
+        elif self.dist_side <= self.prev_dist_side: 
             self.reward_side = 30
-        elif self.dist_main == self.prev_dist_side: 
-            self.reward_side = 20
         else:
             self.reward_side = -5 
 
