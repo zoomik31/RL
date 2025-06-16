@@ -150,7 +150,7 @@ if __name__ == "__main__":
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
     env = RandomGame(screen, maps)
-    agent = DQL(num_layers=34)#34 13
+    agent = DQL(num_layers=13)#34 13
     env.generate_button()
     agent.rollback()
 
