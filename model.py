@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.optim as optim
 import pygame
-from Environment import *
+from Enviroment import *
 # from random_train import *
 import random
 import matplotlib.pyplot as plt
@@ -132,12 +132,22 @@ class DQL(nn.Module):
             self.min_lose = self.loses[-1]
             torch.save(self, r'E:\VS_project\souless\model_checkpoint.pt') 
 
-    def game_main(self, model):
-        state = self.env.get_state_main()
-        answer = model.forward((torch.FloatTensor(state)))
-        action = torch.argmax(answer).item()
-        
-        env.step_main(action)
+    def game_main(self, model=None):
+        if model == None:
+            state = self.env.get_state_main()
+            answer = self.forward((torch.FloatTensor(state)))
+            action = torch.argmax(answer).item()
+            
+            self.env.step_main(action)
+        else:
+            state = self.env.get_state_main()
+            if (random.random() < EPS):
+                action = random.choice(range(4))
+            else:
+                answer = model.forward((torch.FloatTensor(state)))
+                action = torch.argmax(answer).item()
+            next_state, reward, done = self.env.step_main(action)
+            self.remember(state, action, reward, next_state, int(done))
 
     def game_side(self):
         state = self.env.get_state_side()

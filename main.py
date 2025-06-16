@@ -31,6 +31,7 @@ class MainGame():
         self.chosed_type_map = False
         self.on_mission = False
         self.agent_1 = None
+        self.agent = None
         self.episode = 1
         self.steps = 0
         self.max_steps = 2500
@@ -87,14 +88,11 @@ class MainGame():
         if self.agent_1 is None:
             self.agent_1 = DQL(self.env)
             # torch.load('model.pt', weights_only = False) # model_checkpoint
-            self.agent_2 = DQL(self.env, num_layers=13)
+            self.agent_2 = DQL(self.env, num_layers=36)
 
         self.agent_1.game_main(torch.load('model.pt', weights_only = False))
         self.agent_2.game_side()
-        
-        self.env.save_button.draw_button(screen)
-        self.env.back_button.draw_button(screen)
-        
+
         if self.env.train_step > 3500:
             if self.env.train_step % 200 == 0:
                 self.env.car_1.restart()
@@ -108,18 +106,24 @@ class MainGame():
                 self.agent_2.train()
         self.env.train_step += 1
 
-    def dql_learning(self):
-        if self.agent is None:
-            self.agent = DQL(self.env, num_layers=13)
         self.env.save_button.draw_button(screen)
         self.env.back_button.draw_button(screen)
-        self.agent.game()
+        self.env.draw_game()
+
+    def dql_learning(self):
+        if self.agent is None:
+            self.agent = DQL(self.env, num_layers=34)
+
+        self.agent.game_main()
             
         if self.env.train_step % 20 == 0:
             print(self.env.train_step)
             self.agent.train()
         
         self.env.train_step += 1
+        self.env.save_button.draw_button(screen)
+        self.env.back_button.draw_button(screen)
+        self.env.draw_game()
 
     def button_tracking(self):
         for event in pygame.event.get():
@@ -129,7 +133,7 @@ class MainGame():
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if self.one_agent.button_rect.collidepoint(event.pos) and self.num_agent == 0:
                     self.num_agent = 1
-                    self.env = OneAgentGame(self.screen)
+                    self.env = MultyAgentEnvGame(self.screen)
                 elif self.multyagent.button_rect.collidepoint(event.pos) and self.num_agent == 0:
                     self.num_agent = 2
                     self.env = MultyAgentEnvGame(self.screen)
@@ -154,11 +158,11 @@ class MainGame():
                             self.on_mission = True
                             self.cursor.execute(f"SELECT map, x, y from {map.text}")
                             record = self.cursor.fetchall()
-                            self.env.generate_map(record)
-            
+                            if self.num_agent == 1:
+                                self.env.generate_map_main(record)
+                            elif self.num_agent == 2:
+                                self.env.generate_map_side(record)
 
-
-                
 if __name__ == "__main__":
     pygame.init()
     screen = pygame.display.set_mode((WIDTH_SCREEN, HEIGHT_SCREEN))
