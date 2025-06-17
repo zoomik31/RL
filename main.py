@@ -32,6 +32,8 @@ class MainGame():
         self.on_mission = False
         self.agent_1 = None
         self.agent = None
+        self.all_map_disc = []
+        self.map_disc = []
         self.episode = 1
         self.steps = 0
         self.max_steps = 2500
@@ -63,25 +65,31 @@ class MainGame():
         self.map_type_5.create_button()
 
     def sort_map(self, name):
-        self.cursor.execute("SELECT type_id, name from cell_types")
+        self.cursor.execute("SELECT type_id, name, category, strain from cell_types")
         record = self.cursor.fetchall()
         needed_id = []
         for row in record:
             if name in row[1]:
                 needed_id.append(row[0])
+                self.all_map_disc.append(row)
+        print(self.all_map_disc)
         self.maps = []
         self.cursor.execute("SELECT cell_id, map_name from all_map")
         record = self.cursor.fetchall()
         for row in record:
             if row[0] in needed_id:
                 self.maps.append(row[1])
+            for cell in self.all_map_disc:
+                if cell[0] == row[0]:
+                    self.map_disc.append([cell, row[1]])
+        print(self.map_disc)
         self.map_btns = []
         for i, map in enumerate(self.maps):
             map_btn = MapButton(420, 395+(i+1)*60, map)
             map_btn.create_button()
             self.map_btns.append(map_btn)
         self.map_created = True
-        print(record)
+        
         return self.map_created
 
     def multyagent_learning(self):
@@ -106,8 +114,13 @@ class MainGame():
             self.agent_2.train()
         self.env.train_step += 1
 
+        # surf = pygame.Surface((300, 110))
+        # screen.blit(surf, (300, 845))
         self.env.save_button.draw_button(screen)
         self.env.back_button.draw_button(screen)
+
+        for text in self.env.map_discription:
+            text.draw_dir_text(screen)
         self.env.draw_game()
 
     def dql_learning(self):
@@ -121,8 +134,11 @@ class MainGame():
             self.agent.train()
         
         self.env.train_step += 1
+
         self.env.save_button.draw_button(screen)
         self.env.back_button.draw_button(screen)
+        for text in self.env.map_discription:
+            text.draw_dir_text(screen)
         self.env.draw_game()
 
     def button_tracking(self):
@@ -158,10 +174,13 @@ class MainGame():
                             self.on_mission = True
                             self.cursor.execute(f"SELECT map, x, y from {map.text}")
                             record = self.cursor.fetchall()
-                            if self.num_agent == 1:
-                                self.env.generate_map_main(record)
-                            elif self.num_agent == 2:
-                                self.env.generate_map_side(record)
+                            
+                            for row in self.map_disc:
+                                if map.text == row[1]:
+                                    if self.num_agent == 1:
+                                        self.env.generate_map_main(record, row[0])
+                                    elif self.num_agent == 2:
+                                        self.env.generate_map_side(record, row[0])
 
 if __name__ == "__main__":
     pygame.init()

@@ -109,6 +109,33 @@ class SaveModelButton(Button):
     def save_model(self, model):
         torch.save(model.state_dict(), 'model.pth')
 
+class DirectionText(pygame.Surface):
+    def __init__(self, x, y):
+        pygame.Surface.__init__(self, (300, 20))
+        self.color = WHITE
+        self.x = x
+        self.y = y
+        self.font = pygame.font.Font(None, 24)
+        self.text_colour = BLACK
+        self.font_antialias = True
+    
+    def create_text(self, text):
+        self.fill(self.color)
+        print(text)
+        self.text_dir = self.font.render(text, self.font_antialias, self.text_colour)
+        
+        self.text_rect = self.text_dir.get_rect(
+        center=(self.get_width() /2, 
+                self.get_height()/2))
+        
+        self.dir_text_space = self.get_rect(center=(self.x, self.y))
+    
+    def draw_dir_text(self, screen):
+        self.blit(self.text_dir, self.text_rect)
+
+        screen.blit(self, (self.dir_text_space.x, self.dir_text_space.y))
+
+
 class Car(pygame.sprite.Sprite):
     def __init__(self, x=0, y=0, size=10, colour=RED):
         pygame.sprite.Sprite.__init__(self)

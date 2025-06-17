@@ -48,7 +48,8 @@ class Game():
         self.reward_side = 0
         self.on_mission = False
     
-    def generate_map_side(self, map):
+    def generate_map_side(self, map, map_disc):
+        self.map_disc = map_disc
         self.map = map
         car_created = False
         for row in self.map:
@@ -101,7 +102,8 @@ class Game():
 
         self.generate_button()
     
-    def generate_map_main(self, map):
+    def generate_map_main(self, map, map_disc):
+        self.map_disc = map_disc
         self.map = map
         for row in self.map:
             if row[0] == 1:
@@ -149,8 +151,18 @@ class Game():
         self.generate_button()
             
     def generate_button(self):
-        self.back_button = BackButton(200, 900, "choise map")
-        self.save_button = SaveModelButton(600, 900, "save model")
+        self.back_button = BackButton(150, 900, "choise map")
+        self.save_button = SaveModelButton(690, 900, "save model")
+
+        self.map_discription = []
+        pretext = ['', 'Категория дороги:', 'Максимальная нагрузка на ось:']
+        for i, text in enumerate(self.map_disc):
+            if i == 0:
+                continue
+            else:
+                dir_text = DirectionText(425, 900+((i-2)*20))
+                dir_text.create_text(f"{pretext[i-1]} {text}")
+                self.map_discription.append(dir_text)
 
         self.back_button.create_button()
         self.save_button.create_button()
