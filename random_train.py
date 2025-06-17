@@ -178,7 +178,9 @@ class RandomGame():
         elif self.flag_check():
             self.reward = 100
         elif self.dist < self.prev_dist: 
-            self.reward = 1
+            self.reward = 25
+        elif self.dist == self.prev_dist: 
+            self.reward = 10
         else:
             self.reward = 0
 

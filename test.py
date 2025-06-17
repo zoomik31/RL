@@ -37,7 +37,7 @@ if __name__ == "__main__":
             env.save_button.draw_button(screen)
             game(env, model)
 
-            if env.train_step % 200 == 0:
+            if env.train_step % 500 == 0:
                 print(env.train_step)
                 env.car.restart()
 

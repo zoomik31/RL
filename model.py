@@ -16,11 +16,11 @@ class DQL(nn.Module):
 
         super().__init__()
         # Слои
-        self.inp = nn.Linear(num_layers, 32)
-        self.hidden1 = nn.Linear(32, 32)
+        self.inp = nn.Linear(num_layers, 50)
+        self.hidden1 = nn.Linear(50, 50)
         self.dropout = nn.Dropout(0.3)
-        self.hidden2 = nn.Linear(32, 32)
-        self.out = nn.Linear(32, 5)
+        self.hidden2 = nn.Linear(50, 50)
+        self.out = nn.Linear(50, 5)
   
         # Память
         self.memory_states = []
