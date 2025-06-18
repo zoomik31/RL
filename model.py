@@ -154,7 +154,7 @@ if __name__ == "__main__":
             env.save_button.draw_button(screen)
             agent.game()
             
-            if env.train_step % 20 == 0:
+            if env.train_step % 40 == 0:
                 print(env.train_step)
                 agent.train()
                 # agent.checkpoint()
@@ -162,7 +162,7 @@ if __name__ == "__main__":
                 # agent.draw_plot()
             if env.train_step % 500 == 0:
                 print(env.train_step)
-                EPS = 0
+                # EPS = 0
                 # agent.train()
                 # env.car.restart()
                 # agent.draw_plot()

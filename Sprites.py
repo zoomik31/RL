@@ -97,9 +97,11 @@ class BackButton(Button):
 class SaveModelButton(Button):
     def __init__(self, x, y, text):
         super().__init__(x, y, text)
+        self.num = 0
     
     def save_model(self, model):
-        torch.save(model.state_dict(), 'model.pth')
+        self.num += 1
+        torch.save(model.state_dict(), 'model.pt')
 
 class Car(pygame.sprite.Sprite):
     def __init__(self, x=0, y=0, size=10, colour=RED):
