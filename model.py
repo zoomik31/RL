@@ -4,23 +4,23 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.optim as optim
 import pygame
-from Environment import *
-from random_train import *
+from Enviroment import *
+# from random_train import *
 import random
 import matplotlib.pyplot as plt
 
 EPS = 0.25
 
 class DQL(nn.Module):
-    def __init__(self, LearningRate=0.01, num_layers=9):
+    def __init__(self, env, LearningRate=0.01, num_layers=9):
 
         super().__init__()
         # Слои
-        self.inp = nn.Linear(num_layers, 50)
-        self.hidden1 = nn.Linear(50, 50)
+        self.inp = nn.Linear(num_layers, 32)
+        self.hidden1 = nn.Linear(32, 32)
         self.dropout = nn.Dropout(0.3)
-        self.hidden2 = nn.Linear(50, 50)
-        self.out = nn.Linear(50, 5)
+        self.hidden2 = nn.Linear(32, 32)
+        self.out = nn.Linear(32, 5)
   
         # Память
         self.memory_states = []
@@ -39,6 +39,8 @@ class DQL(nn.Module):
         self.optimizer = optim.Adam(self.parameters(), lr=LearningRate)
         self.criterion = nn.SmoothL1Loss()
         self.activation = nn.LeakyReLU()
+
+        self.env = env
     
     #Вывод
     def forward(self, x):
@@ -104,44 +106,33 @@ class DQL(nn.Module):
         self.optimizer.step()
 
         print(f"Ошибка: {loss}")
-    
-    def draw_plot(self):
-        self.epoch.append(self.epochs_num)
-        plt.plot(self.epoch, self.loses)
-        plt.ion()
-        plt.show()
-        self.epochs_num +=1
-        plt.pause(0.001)
-    
-    def rollback(self):
-        env.del_state()
 
-        env.train_step = 1
-        self.epochs_num = 1
-        self.loses = []
-        self.epoch = []
+    def game_main(self, model=None):
+        if model != None:
+            state = self.env.get_state_main()
+            answer = model.forward((torch.FloatTensor(state)))
+            action = torch.argmax(answer).item()
+            
+            self.env.step_main(action)
+        else:
+            state = self.env.get_state_main()
+            if (random.random() < EPS):
+                action = random.choice(range(4))
+            else:
+                answer = self.forward((torch.FloatTensor(state)))
+                action = torch.argmax(answer).item()
+            next_state, reward, done = self.env.step_main(action)
+            self.remember(state, action, reward, next_state, int(done))
 
-        EPS = 0.4
-
-        plt.close('all')
-    
-    def checkpoint(self):
-        if self.loses[-1] < self.min_lose or self.min_lose == -1:
-            self.min_lose = self.loses[-1]
-            torch.save(self, r'E:\VS_project\souless\model_checkpoint.pt') 
-
-    def game(self):
-        state = env.get_state()
+    def game_side(self):
+        state = self.env.get_state_side()
         if (random.random() < EPS):
             action = random.choice(range(4))
         else:
             answer = self.forward((torch.FloatTensor(state)))
             action = torch.argmax(answer).item()
-        next_state, reward, done = env.step(action)
+        next_state, reward, done = self.env.step_side(action)
         self.remember(state, action, reward, next_state, int(done))
-        if done:
-            env.del_state()
-            env.generate_map()
 
 if __name__ == "__main__":
     pygame.init()
@@ -149,7 +140,7 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((WIDTH_SCREEN, HEIGHT_SCREEN))
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
-    env = RandomGame(screen, maps)
+    env = Game(screen)
     agent = DQL(num_layers=34)#34 13
     env.generate_button()
     agent.rollback()
@@ -172,9 +163,9 @@ if __name__ == "__main__":
                 # agent.draw_plot()
             if env.train_step % 500 == 0:
                 print(env.train_step)
-                # EPS = 0
+                EPS = 0
                 # agent.train()
-                env.car.restart()
+                # env.car.restart()
                 # agent.draw_plot()
             
             env.train_step += 1
