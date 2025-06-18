@@ -106,31 +106,6 @@ class DQL(nn.Module):
         self.optimizer.step()
 
         print(f"Ошибка: {loss}")
-    
-    def draw_plot(self):
-        self.epoch.append(self.epochs_num)
-        plt.plot(self.epoch, self.loses)
-        plt.ion()
-        plt.show()
-        self.epochs_num +=1
-        plt.pause(0.001)
-    
-    def rollback(self):
-        env.del_state()
-
-        env.train_step = 1
-        self.epochs_num = 1
-        self.loses = []
-        self.epoch = []
-
-        EPS = 0.4
-
-        plt.close('all')
-    
-    def checkpoint(self):
-        if self.loses[-1] < self.min_lose or self.min_lose == -1:
-            self.min_lose = self.loses[-1]
-            torch.save(self, r'E:\VS_project\souless\model_checkpoint.pt') 
 
     def game_main(self, model=None):
         if model != None:

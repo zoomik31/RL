@@ -109,7 +109,7 @@ class SaveModelButton(Button):
     def save_model(self, model):
         torch.save(model.state_dict(), 'model.pth')
 
-class DirectionText(pygame.Surface):
+class InformationText(pygame.Surface):
     def __init__(self, x, y):
         pygame.Surface.__init__(self, (300, 20))
         self.color = WHITE

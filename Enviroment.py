@@ -6,14 +6,6 @@ import pandas as pd
 import psycopg2
 from Sprites import *
 
-ORANGE = (255,140,0)
-YELLOW = (255, 255, 0)
-RED = (255, 0, 0)
-GREY = (123, 241, 123)
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GREEN = (0, 255, 0)
-
 WIDTH = 840
 HEIGHT = 840
 
@@ -160,7 +152,7 @@ class Game():
             if i == 0:
                 continue
             else:
-                dir_text = DirectionText(425, 900+((i-2)*20))
+                dir_text = InformationText(425, 900+((i-2)*20))
                 dir_text.create_text(f"{pretext[i-1]} {text}")
                 self.map_discription.append(dir_text)
 

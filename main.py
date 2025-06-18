@@ -6,14 +6,6 @@ from model import *
 import time
 import torch
 
-BLUE = (0, 0, 255)
-YELLOW = (255, 255, 0)
-RED = (255, 0, 0)
-GREY = (123, 241, 123)
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GREEN = (0, 255, 0)
-
 WIDTH = 840
 HEIGHT = 840
 
@@ -95,7 +87,6 @@ class MainGame():
     def multyagent_learning(self):
         if self.agent_1 is None:
             self.agent_1 = DQL(self.env)
-            # torch.load('model.pt', weights_only = False) # model_checkpoint
             self.agent_2 = DQL(self.env, num_layers=36)
 
         self.agent_1.game_main(torch.load('model.pt', weights_only = False))
@@ -114,8 +105,6 @@ class MainGame():
             self.agent_2.train()
         self.env.train_step += 1
 
-        # surf = pygame.Surface((300, 110))
-        # screen.blit(surf, (300, 845))
         self.env.save_button.draw_button(screen)
         self.env.back_button.draw_button(screen)
 
@@ -198,7 +187,7 @@ if __name__ == "__main__":
 
     while True:
         main_menu.button_tracking()
-        screen.fill((155, 255, 155))
+        screen.fill((155, 255, 155)) 
         clock.tick(30)
         if main_menu.num_agent == 0:
             main_menu.one_agent.draw_button(screen)
