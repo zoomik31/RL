@@ -74,7 +74,7 @@ class RandomGame():
         self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
     
     def generate_button(self):
-        self.map_button_2 = MapButton(420, 455, 'Start', self.maps)
+        self.map_button_2 = MapButton(420, 455, 'Start')
         self.save_button = SaveModelButton(600, 900, "save model")
 
         self.map_button_2.create_button()

@@ -65,13 +65,13 @@ class Puddle(Cell):
         super().__init__(x, y, size, colour)
 
 class Button(pygame.Surface):
-    def __init__(self, x, y, text, size):
+    def __init__(self, x, y, text):
         pygame.Surface.__init__(self, (150, 50))
         self.colour = WHITE
         self.x = x
         self.y = y
-        self.size = size
-        self.font = pygame.font.Font(None, size)
+        self.size = 24
+        self.font = pygame.font.Font(None, self.size)
         self.text_colour = BLACK
         self.font_antialias = True
         self.text = text
@@ -87,54 +87,19 @@ class Button(pygame.Surface):
         screen.blit(self, (self.button_rect.x, self.button_rect.y))
 
 class MapButton(Button):
-    def __init__(self, x, y, text, size=24):
-        super().__init__(x, y, text, size)
+    def __init__(self, x, y, text):
+        super().__init__(x, y, text)
     
 class BackButton(Button):
-    def __init__(self, x, y, text, size=24):
-        super().__init__(x, y, text, size)
-
-class NumAgent(Button):
-    def __init__(self, x, y, text, size=24):
-        super().__init__(x, y, text, size)
-    
-class MapType(Button):
-    def __init__(self, x, y, text, size=24):
-        super().__init__(x, y, text, size)
+    def __init__(self, x, y, text):
+        super().__init__(x, y, text)
 
 class SaveModelButton(Button):
-    def __init__(self, x, y, text, size=24):
-        super().__init__(x, y, text, size)
+    def __init__(self, x, y, text):
+        super().__init__(x, y, text)
     
     def save_model(self, model):
         torch.save(model.state_dict(), 'model.pth')
-
-class InformationText(pygame.Surface):
-    def __init__(self, x, y):
-        pygame.Surface.__init__(self, (300, 20))
-        self.color = WHITE
-        self.x = x
-        self.y = y
-        self.font = pygame.font.Font(None, 24)
-        self.text_colour = BLACK
-        self.font_antialias = True
-    
-    def create_text(self, text):
-        self.fill(self.color)
-        print(text)
-        self.text_dir = self.font.render(text, self.font_antialias, self.text_colour)
-        
-        self.text_rect = self.text_dir.get_rect(
-        center=(self.get_width() /2, 
-                self.get_height()/2))
-        
-        self.dir_text_space = self.get_rect(center=(self.x, self.y))
-    
-    def draw_dir_text(self, screen):
-        self.blit(self.text_dir, self.text_rect)
-
-        screen.blit(self, (self.dir_text_space.x, self.dir_text_space.y))
-
 
 class Car(pygame.sprite.Sprite):
     def __init__(self, x=0, y=0, size=10, colour=RED):
@@ -173,7 +138,7 @@ class Car(pygame.sprite.Sprite):
         self.direction = "up"
         self.rect.y -= self.size
 
-    def go_back(self):
+    def go_back(self): 
         if self.direction == 'right':
             self.rect.x -= self.size
         if self.direction == 'left':

@@ -4,8 +4,8 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.optim as optim
 import pygame
-from Enviroment import *
-# from random_train import *
+# from Enviroment import *
+from random_train import *
 import random
 import matplotlib.pyplot as plt
 
@@ -124,14 +124,14 @@ class DQL(nn.Module):
             next_state, reward, done = self.env.step_main(action)
             self.remember(state, action, reward, next_state, int(done))
 
-    def game_side(self):
-        state = self.env.get_state_side()
+    def game(self):
+        state = self.env.get_state()
         if (random.random() < EPS):
             action = random.choice(range(4))
         else:
             answer = self.forward((torch.FloatTensor(state)))
             action = torch.argmax(answer).item()
-        next_state, reward, done = self.env.step_side(action)
+        next_state, reward, done = self.env.step(action)
         self.remember(state, action, reward, next_state, int(done))
 
 if __name__ == "__main__":
@@ -140,10 +140,9 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((WIDTH_SCREEN, HEIGHT_SCREEN))
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
-    env = Game(screen)
-    agent = DQL(num_layers=34)#34 13
+    env = RandomGame(screen, maps)
+    agent = DQL(env, num_layers=34)#34 13
     env.generate_button()
-    agent.rollback()
 
     while True:
         screen.fill((155, 255, 155))
@@ -158,7 +157,7 @@ if __name__ == "__main__":
             if env.train_step % 20 == 0:
                 print(env.train_step)
                 agent.train()
-                agent.checkpoint()
+                # agent.checkpoint()
                 # env.car.restart()
                 # agent.draw_plot()
             if env.train_step % 500 == 0:
