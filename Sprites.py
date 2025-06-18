@@ -107,7 +107,7 @@ class SaveModelButton(Button):
         super().__init__(x, y, text, size)
     
     def save_model(self, model):
-        torch.save(model.state_dict(), 'model.pth')
+        torch.save(model.state_dict(), f'model.pt')
 
 class InformationText(pygame.Surface):
     def __init__(self, x, y):
