@@ -20,9 +20,9 @@ if __name__ == "__main__":
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
     env = Game(screen, maps)
-    train_func = DQL(screen, maps)
+    train_func = DQL(env)
     # model.load_state_dict(torch.load('model.pt'))
-    model = torch.load('model.pt', weights_only = False) # model_checkpoint
+    model = torch.load('model_best.pt', weights_only=False) # model_checkpoint
     # model.eval()
     env.generate_button()
 

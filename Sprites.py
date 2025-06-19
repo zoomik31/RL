@@ -87,8 +87,9 @@ class Button(pygame.Surface):
         screen.blit(self, (self.button_rect.x, self.button_rect.y))
 
 class MapButton(Button):
-    def __init__(self, x, y, text):
+    def __init__(self, x, y, text, map):
         super().__init__(x, y, text)
+        self.map = map
     
 class BackButton(Button):
     def __init__(self, x, y, text):
@@ -101,7 +102,7 @@ class SaveModelButton(Button):
     
     def save_model(self, model):
         self.num += 1
-        torch.save(model.state_dict(), 'model.pt')
+        torch.save(model, 'model.pth')
 
 class Car(pygame.sprite.Sprite):
     def __init__(self, x=0, y=0, size=10, colour=RED):
