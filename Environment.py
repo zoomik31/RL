@@ -3,11 +3,10 @@ import math
 import random
 import torch
 import pandas as pd
-
+import psycopg2
 from Sprites import *
-from model import DQL
 
-BLUE = (0, 0, 255)
+ORANGE = (255,140,0)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 GREY = (123, 241, 123)
@@ -21,72 +20,104 @@ HEIGHT = 840
 WIDTH_SCREEN = 840
 HEIGHT_SCREEN = 950
 
-FPS = 60
-EPS = 0.4
-
+EPS = 0.3
 
 class Game():
-    def __init__(self, screen, map):
-        self.map = pd.read_excel(map, header=None)
+    def __init__(self, screen):
+        self.fps = 20
+
         self.empty_space = pygame.sprite.Group()
         self.border = pygame.sprite.Group()
         self.forest = pygame.sprite.Group()
-        self.size = WIDTH/len(self.map)
+        self.roads = pygame.sprite.Group()
+        self.start_cells = pygame.sprite.Group()
+        self.snow_cells = pygame.sprite.Group()
+        self.snowdrifts = pygame.sprite.Group()
+        self.divinglines = pygame.sprite.Group()
+        self.puddles = pygame.sprite.Group()
+
+        self.all_map = []
+        self.size = 20
+        self.done = False
+        
+        self.train_step = 1
         self.screen = screen
         self.reward = 0
+        self.on_mission = False
     
-    def generate_map(self):
-        for y in range(len(self.map)):
-            layer = []
-            for x in range(len(self.map[0])):
-                if self.map[y][x] == 1:
-                    brd = Border(x*self.size, y*self.size, self.size)
-                    self.border.add(brd)
+    def generate_map(self, map):
+        self.map = map
+        car_created = False
+        for row in self.map:
+            if row[0] == 1:
+                brd = Border(row[2]*self.size, row[1]*self.size, self.size)
+                self.border.add(brd)
+            
+            elif row[0] == 2:
+                self.flag = Flag(row[2]*self.size, row[1]*self.size, self.size)
+
+            elif row[0] == 3:
+                tree = Tree(row[2]*self.size, row[1]*self.size, self.size)
+                self.forest.add(tree)
+
+            elif row[0] == 4:
+                road = Road(row[2]*self.size, row[1]*self.size, self.size)
+                self.roads.add(road)
+
+            elif row[0] == 5:
+                self.car = Car(row[2]*self.size, row[1]*self.size, self.size, RED)
                 
-                elif self.map[y][x] == 2:
-                    self.flag = Flag(x*self.size, y*self.size, self.size)
+                start_cell = Start(row[2]*self.size, row[1]*self.size, self.size)
+                self.start_cells.add(start_cell)
 
-                elif self.map[y][x] == 3:
-                    tree = Tree(x*self.size, y*self.size, self.size)
-                    self.forest.add(tree)
-
-                else:
-                    emp = Empty(x*self.size, y*self.size, self.size)
-                    self.empty_space.add(emp)
-        
-        self.car = Car(9 * self.size, 35 * self.size, self.size)
+            elif row[0] == 6:
+                snow = Snow(row[2]*self.size, row[1]*self.size, self.size)
+                self.snow_cells.add(snow)
+            
+            elif row[0] == 7:
+                snowdrift = SnowDrift(row[2]*self.size, row[1]*self.size, self.size)
+                self.snowdrifts.add(snowdrift)
+            
+            elif row[0] == 8:
+                div_line = DivingLine(row[2]*self.size, row[1]*self.size, self.size)
+                self.divinglines.add(div_line)
+            
+            elif row[0] == 9:
+                puddle = Puddle(row[2]*self.size, row[1]*self.size, self.size)
+                self.puddles.add(puddle)
+            else:
+                self.emp = Empty(row[2]*self.size, row[1]*self.size, self.size)
+                self.empty_space.add(self.emp)
+    
         self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
 
+        self.generate_button()
+            
     def generate_button(self):
-        self.map_button_1 = MapButton(self.maps["map 1"][1][0], self.maps["map 1"][1][1], "1 map", self.maps["map 1"][0])
-        self.map_button_2 = MapButton(self.maps["map 2"][1][0], self.maps["map 2"][1][1], "2 map", self.maps["map 2"][0])
-        self.map_button_3 = MapButton(self.maps["map 3"][1][0], self.maps["map 3"][1][1], "3 map", self.maps["map 3"][0])
+        self.back_button = BackButton(200, 900, "choise map")
+        self.save_button = SaveModelButton(600, 900, "save model")
 
-        self.switch_button = SwitchButton(200, 900, "Switch map")
-
-        self.save_button = SaveModelButton(600, 900, "Save model")
-        
-        self.map_button_1.create_button()
-        self.map_button_2.create_button()
-        self.map_button_3.create_button()
-
-        self.switch_button.create_button()
+        self.back_button.create_button()
         self.save_button.create_button()
+    
+
 
     def barriers_check(self):
-        if pygame.sprite.spritecollideany(self.car, self.forest) or pygame.sprite.spritecollideany(self.car, self.border):
-            self.car.go_back()
+        if pygame.sprite.spritecollideany(self.car, self.forest) or pygame.sprite.spritecollideany(self.car, self.border) or pygame.sprite.spritecollideany(self.car, self.snowdrifts) or pygame.sprite.spritecollideany(self.car, self.puddles):
             return True
 
     def flag_check(self):
         if pygame.sprite.collide_rect(self.car, self.flag):
+            self.done = True
             self.car.restart()
             return True
 
+        
     def measure_distance(self):
         self.prev_dist = self.dist
         self.dist = math.sqrt((self.car.rect.x-self.flag.rect.x)**2 + (self.car.rect.y-self.flag.rect.y)**2)
-
+    
+    
     def get_state(self):
 
         state = []
@@ -124,6 +155,7 @@ class Game():
                     int(self.block_up), int(self.block_right),int(self.block_down),int(self.block_left),
                     int(self.car.direction == "up"), int(self.car.direction == "right"), int(self.car.direction == "down"), int(self.car.direction == "left")
         ]
+        state.append(self.dist)
         return state
 
     def step(self, action):
@@ -138,47 +170,64 @@ class Game():
         
         self.run_game()
         state = self.get_state()
-        return state, self.reward
+
+        return state, self.reward, self.done
 
     def run_game(self):
-        #Совершение действия
+        self.button_tracking()
         self.reward = 0
         self.measure_distance()
         if self.barriers_check():
             self.reward = -100
         elif self.flag_check():
-            self.reward = 100
+            self.reward = 150
         # elif self.dist < self.prev_dist:
-        #     self.reward = 50
+        #     if self.dist < 300:
+        #         self.reward = 30
+        #     elif self.dist < 100:
+        #         self.reward = 50
+        #     else:
+        #         self.reward = 10
         # elif self.dist == self.prev_dist:
-            self.reward = 0
-        else:
-            self.reward = 30
+        #     self.reward = 0
+        # else:
+        #     if self.dist < 300:
+        #         self.reward = 10
+        #     elif self.dist < 100:
+        #         self.reward = 30
+        #     else:
+        #         self.reward = 5
 
+        elif self.dist < self.prev_dist: 
+            self.reward = 30
+        else:
+            self.reward = 0 
 
         self.border.draw(self.screen)
         self.forest.draw(self.screen)
+        self.roads.draw(self.screen)
         self.empty_space.draw(self.screen)
-        self.screen.blit(self.flag.image, self.flag.rect)
+        self.snow_cells.draw(self.screen)
+        self.snowdrifts.draw(self.screen)
+        self.divinglines.draw(self.screen)
+        self.puddles.draw(self.screen)
+        self.start_cells.draw(self.screen)
         self.screen.blit(self.car.image, self.car.rect)
+        self.screen.blit(self.flag.image, self.flag.rect)
+        # self.screen.blit(self.car.image, self.car.rect)
         pygame.display.flip() 
-    
-    def button_tracking(self, model):
+
+    def print_state(self):
+        print(self.dist)
+
+    def button_tracking(self):
         for event in pygame.event.get():
             #Закрытие игры
             if event.type == pygame.QUIT:
                 pygame.quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_DOWN:
-                    game.car.go_down()
-                elif event.key == pygame.K_RIGHT:
-                    game.car.go_right()
-                elif event.key == pygame.K_UP:
-                    game.car.go_up()
-                elif event.key == pygame.K_LEFT:
-                    self.car.go_left()
-            
+   
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                
                 if self.map_button_1.button_rect.collidepoint(event.pos) and not(self.on_mission):
                     self.on_mission = True
                     self.generate_map(self.map_button_1.map)
@@ -188,18 +237,17 @@ class Game():
                 if self.map_button_3.button_rect.collidepoint(event.pos) and not(self.on_mission):
                     self.on_mission = True
                     self.generate_map(self.map_button_3.map)
-                
-                if self.switch_button.button_rect.collidepoint(event.pos) and self.on_mission:
+
+                if self.back_button.button_rect.collidepoint(event.pos) and self.on_mission:
                     self.on_mission = False
-                
-                if self.save_button.button_rect.collidepoint(event.pos):
-                    self.save_button.save(model.state_dict(), 'model')
 
 if __name__ == "__main__":
     pygame.init()
+    
     maps = {"map 1": ['E:\VS_project\souless\map_1.xlsx', (420, 395)], 
             "map 2": ['E:\VS_project\souless\map_2.xlsx', (420, 455)],
             "map 3": ['E:\VS_project\souless\map_4.xlsx', (420, 515)]}
+    
     screen = pygame.display.set_mode((WIDTH_SCREEN, HEIGHT_SCREEN))
     pygame.display.set_caption("game")
     clock = pygame.time.Clock()
@@ -208,13 +256,15 @@ if __name__ == "__main__":
 
     while True:
         screen.fill((155, 255, 155))
-        clock.tick(FPS) 
+        clock.tick(game.fps) 
         
         game.button_tracking()
         
+        
         if game.on_mission:
-            game.switch_button.draw_button(screen)
             game.run_game()
+            
+        
         else:
             game.map_button_1.draw_button(screen)
             game.map_button_2.draw_button(screen)
