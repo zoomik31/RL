@@ -6,6 +6,7 @@ import pandas as pd
 import psycopg2
 from Sprites import *
 
+ORANGE = (255,140,0)
 WIDTH = 840
 HEIGHT = 840
 
@@ -85,7 +86,7 @@ class Game():
                 self.emp = Empty(row[2]*self.size, row[1]*self.size, self.size)
                 self.empty_space.add(self.emp)
     
-        self.car_2 = Car(self.car_1.rect.x+(2*self.size), self.car_1.rect.y, self.size, colour=BLUE)
+        self.car_2 = Car(self.car_1.rect.x+(2*self.size), self.car_1.rect.y, self.size, colour=ORANGE)
         start_cell = Start(self.car_2.rect.x, self.car_2.rect.y, self.size)
         self.start_cells.add(start_cell)
         
@@ -276,9 +277,9 @@ class Game():
         elif self.dist_main < self.prev_dist_main: 
             self.reward_main = 30
         elif self.dist_main == self.prev_dist_main: 
-            self.reward_main = 20
+            self.reward_main = 0
         else:
-            self.reward_main = -5 
+            self.reward_main = -1
 
     def run_game_side(self):
         self.button_tracking()
@@ -290,8 +291,10 @@ class Game():
             self.reward_side = 150
         elif self.dist_side <= self.prev_dist_side: 
             self.reward_side = 30
+        elif self.dist_side == self.prev_dist_side: 
+            self.reward_side = 0
         else:
-            self.reward_side = -5 
+            self.reward_side = 0
 
     def draw_game(self):
         self.border.draw(self.screen)

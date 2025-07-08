@@ -86,23 +86,29 @@ class MainGame():
 
     def multyagent_learning(self):
         if self.agent_1 is None:
-            self.agent_1 = DQL(self.env)
+            self.agent_1 = DQL(self.env, num_layers=34)
             self.agent_2 = DQL(self.env, num_layers=36)
 
-        self.agent_1.game_main(torch.load('model.pt', weights_only = False))
+        self.agent_1.game_main()
         self.agent_2.game_side()
 
-        if self.env.train_step > 3500:
+        if self.env.train_step > 10000:
             if self.env.train_step % 200 == 0:
                 self.env.car_1.restart()
                 self.env.car_2.restart()  
         elif self.env.train_step % 200 == 0:
-            self.agent_2.train()
+            self.agent_1.train_main()
+            self.agent_2.train_side()
             print(self.env.train_step)
             self.env.car_1.restart()
             self.env.car_2.restart()
-        elif self.env.train_step % 20 == 0:
-            self.agent_2.train()
+        # elif self.env.train_step % 100 == 0:
+            # self.agent_1.train_main()
+
+        elif self.env.train_step % 30 == 0:
+            self.agent_1.train_main()
+
+            self.agent_2.train_side()
         self.env.train_step += 1
 
         self.env.save_button.draw_button(screen)
@@ -118,10 +124,20 @@ class MainGame():
 
         self.agent.game_main()
             
-        if self.env.train_step % 20 == 0:
-            print(self.env.train_step)
-            self.agent.train()
+        # if self.env.train_step % 20 == 0:
+        #     print(self.env.train_step)
+        #     self.agent.train_main()
         
+        if self.env.train_step > 2000:
+            if self.env.train_step % 200 == 0:
+                self.env.car_1.restart()
+        elif self.env.train_step % 200 == 0:
+            print(self.env.train_step)
+            self.env.car_1.restart()
+        elif self.env.train_step % 20 == 0:
+            print(self.env.train_step)
+            self.agent.train_main()
+
         self.env.train_step += 1
 
         self.env.save_button.draw_button(screen)

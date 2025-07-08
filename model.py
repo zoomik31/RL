@@ -23,17 +23,19 @@ class DQL(nn.Module):
         self.out = nn.Linear(32, 5)
   
         # Память
-        self.memory_states = []
-        self.memory_actions = []
-        self.memory_rewards = []
-        self.memory_next_states = []
-        self.memory_dones = []
-        self.memory_len = 0
-        self.epochs_num = 1
-        self.loses = []
-        self.epoch = []
-        self.rewards_per_epoch = []
-        self.min_lose = -1
+        self.memory_states_main = []
+        self.memory_actions_main  = []
+        self.memory_rewards_main  = []
+        self.memory_next_states_main  = []
+        self.memory_dones_main  = []
+        self.memory_len_main  = 0
+
+        self.memory_states_side = []
+        self.memory_actions_side = []
+        self.memory_rewards_side = []
+        self.memory_next_states_side = []
+        self.memory_dones_side = []
+        self.memory_len_side = 0
 
         #Параметры
         self.optimizer = optim.Adam(self.parameters(), lr=LearningRate)
@@ -53,42 +55,70 @@ class DQL(nn.Module):
         return x
     
     #Запоминание всех объектов для обучения
-    def remember(self, state, action, reward, next_state, done):
-        self.memory_states.append(state)
-        self.memory_actions.append(action)
-        self.memory_rewards.append(reward)
-        self.memory_next_states.append(next_state)
-        self.memory_dones.append(done)
-        self.memory_len += 1
+    def remember_main(self, state, action, reward, next_state, done):
+        self.memory_states_main.append(state)
+        self.memory_actions_main.append(action)
+        self.memory_rewards_main.append(reward)
+        self.memory_next_states_main.append(next_state)
+        self.memory_dones_main.append(done)
+        self.memory_len_main += 1
+    
+    def remember_side(self, state, action, reward, next_state, done):
+        self.memory_states_side.append(state)
+        self.memory_actions_side.append(action)
+        self.memory_rewards_side.append(reward)
+        self.memory_next_states_side.append(next_state)
+        self.memory_dones_side.append(done)
+        self.memory_len_side += 1
 
     # метод для получения тензоров
-    def samplebatch(self):
+    def samplebatch_main(self):
         
-        states = t.FloatTensor(self.memory_states).cpu()
-        self.memory_states.clear()
+        states = t.FloatTensor(self.memory_states_main).cpu()
+        self.memory_states_main.clear()
         
-        actions = t.IntTensor(self.memory_actions).cpu()
-        self.memory_actions.clear()
+        actions = t.IntTensor(self.memory_actions_main).cpu()
+        self.memory_actions_main.clear()
 
-        rewards = t.FloatTensor(self.memory_rewards).cpu()
-        self.memory_rewards.clear()
+        rewards = t.FloatTensor(self.memory_rewards_main).cpu()
+        self.memory_rewards_main.clear()
         print(rewards)
 
-        next_states = t.FloatTensor(self.memory_next_states).cpu()
-        self.memory_next_states.clear()
+        next_states = t.FloatTensor(self.memory_next_states_main).cpu()
+        self.memory_next_states_main.clear()
 
-        dones = t.FloatTensor(self.memory_dones).cpu()
-        self.memory_dones.clear()
+        dones = t.FloatTensor(self.memory_dones_main).cpu()
+        self.memory_dones_main.clear()
 
-        self.memory_len = 0
+        self.memory_len_main = 0
         return (states, actions, rewards, next_states, dones)
     
+    def samplebatch_side(self):
+        
+        states = t.FloatTensor(self.memory_states_side).cpu()
+        self.memory_states_side.clear()
+        
+        actions = t.IntTensor(self.memory_actions_side).cpu()
+        self.memory_actions_side.clear()
 
-    def train(self):
-        if (self.memory_len == 0):
+        rewards = t.FloatTensor(self.memory_rewards_side).cpu()
+        self.memory_rewards_side.clear()
+        print(rewards)
+
+        next_states = t.FloatTensor(self.memory_next_states_side).cpu()
+        self.memory_next_states_side.clear()
+
+        dones = t.FloatTensor(self.memory_dones_side).cpu()
+        self.memory_dones_side.clear()
+
+        self.memory_len_side = 0
+        return (states, actions, rewards, next_states, dones)
+
+    def train_main(self):
+        if (self.memory_len_main == 0):
             return
-        memory_len = self.memory_len
-        states, actions, rewards, next_states, dones = self.samplebatch()
+        memory_len = self.memory_len_main
+        states, actions, rewards, next_states, dones = self.samplebatch_main()
        
         NeuroNowAnswer = self.forward(states)
         NeuroNextAnswer = self.forward(next_states)
@@ -97,8 +127,27 @@ class DQL(nn.Module):
         predict_target = rewards + 0.8 * predicted_future_value * (1-dones)
         loss = self.criterion(predict_target, predicted_now_value)
         
-        self.loses.append(loss.cpu().item())
-        self.rewards_per_epoch.append(t.sum(rewards.cpu()).item())
+        self.optimizer.zero_grad()
+        loss.backward()
+        if (self.inp.weight.grad.norm() < 0.0001):
+            self.inp.weight.grad.data += t.FloatTensor([0.001]).cpu()
+        self.optimizer.step()
+
+        print(f"Ошибка: {loss}")
+    
+    def train_side(self):
+        if (self.memory_len_side == 0):
+            return
+        memory_len = self.memory_len_side
+        states, actions, rewards, next_states, dones = self.samplebatch_side()
+       
+        NeuroNowAnswer = self.forward(states)
+        NeuroNextAnswer = self.forward(next_states)
+        predicted_now_value = NeuroNowAnswer[range(memory_len), actions]
+        predicted_future_value = t.max(NeuroNextAnswer, dim=1)[0]
+        predict_target = rewards + 0.8 * predicted_future_value * (1-dones)
+        loss = self.criterion(predict_target, predicted_now_value)
+        
         self.optimizer.zero_grad()
         loss.backward()
         if (self.inp.weight.grad.norm() < 0.0001):
@@ -122,7 +171,7 @@ class DQL(nn.Module):
                 answer = self.forward((torch.FloatTensor(state)))
                 action = torch.argmax(answer).item()
             next_state, reward, done = self.env.step_main(action)
-            self.remember(state, action, reward, next_state, int(done))
+            self.remember_main(state, action, reward, next_state, int(done))
 
     def game_side(self):
         state = self.env.get_state_side()
@@ -132,7 +181,7 @@ class DQL(nn.Module):
             answer = self.forward((torch.FloatTensor(state)))
             action = torch.argmax(answer).item()
         next_state, reward, done = self.env.step_side(action)
-        self.remember(state, action, reward, next_state, int(done))
+        self.remember_side(state, action, reward, next_state, int(done))
 
 if __name__ == "__main__":
     pygame.init()
